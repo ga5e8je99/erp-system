@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build && (cp -r .next/static .next/standalone/.next/static 2>/dev/null || true)",
+    "build": "prisma generate && (prisma migrate deploy && tsx prisma/seed.ts || true) && next build && (cp -r .next/static .next/standalone/.next/static 2>/dev/null || true)",
     "start": "node --env-file-if-exists=.env .next/standalone/server.js",
     "postinstall": "prisma generate",
     "lint": "eslint",

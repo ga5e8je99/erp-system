@@ -5,8 +5,12 @@ const envSchema = z.object({
     .string()
     .min(1, "DATABASE_URL is required to connect to PostgreSQL")
     .refine(
-      (val) => val.startsWith("postgresql://") || val.startsWith("postgres://"),
-      "DATABASE_URL must start with postgresql:// or postgres://"
+      (val) =>
+        val.startsWith("postgresql://") ||
+        val.startsWith("postgres://") ||
+        val.startsWith("prisma+postgres://") ||
+        val.startsWith("prisma://"),
+      "DATABASE_URL must start with postgresql://, postgres://, or prisma+postgres://"
     ),
 
   AUTH_SECRET: z
@@ -79,6 +83,7 @@ function parseEnv(): Env {
 
   const rawDatabaseUrl =
     process.env.DATABASE_URL ||
+    process.env.PRISMA_DATABASE_URL ||
     process.env.POSTGRES_PRISMA_URL ||
     process.env.POSTGRES_URL ||
     "postgresql://postgres:postgres@localhost:5432/masar_erp?schema=public";

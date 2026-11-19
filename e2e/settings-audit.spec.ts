@@ -122,7 +122,7 @@ test.describe("Settings Management & System Audit Log Workflow", () => {
     await expect(page.locator("h1")).toContainText("سجل العمليات والرقابة");
 
     // Verify Audit table
-    const table = page.locator("table");
+    const table = page.locator("table").first();
     await expect(table).toBeVisible();
 
     // Test Keyboard Shortcut: "/" to focus search input

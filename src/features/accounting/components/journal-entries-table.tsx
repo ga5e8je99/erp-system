@@ -52,6 +52,10 @@ export function JournalEntriesTable({
   const [reverseTarget, setReverseTarget] = React.useState<JournalEntryListItem | null>(null);
   const [isReversing, setIsReversing] = React.useState(false);
 
+  // Post draft dialog state
+  const [postTarget, setPostTarget] = React.useState<JournalEntryListItem | null>(null);
+  const [isPosting, setIsPosting] = React.useState(false);
+
   const applyFilters = (newSearch?: string, newStatus?: string) => {
     const s = newSearch !== undefined ? newSearch : search;
     const st = newStatus !== undefined ? newStatus : status;
@@ -63,17 +67,22 @@ export function JournalEntriesTable({
     router.push(`/accounting/journal?${params.toString()}`);
   };
 
-  const handlePostDraft = async (id: string) => {
+  const handleConfirmPost = async () => {
+    if (!postTarget) return;
+    setIsPosting(true);
     try {
-      const res = await postDraftJournalEntryAction(id);
+      const res = await postDraftJournalEntryAction(postTarget.id);
       if (res.ok) {
         toast.success(t("postedSuccessfully"));
+        setPostTarget(null);
         router.refresh();
       } else {
         toast.error(res.error || t("failedToPost"));
       }
     } catch {
       toast.error(t("unexpectedError"));
+    } finally {
+      setIsPosting(false);
     }
   };
 
@@ -234,7 +243,7 @@ export function JournalEntriesTable({
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
-                            onClick={() => handlePostDraft(item.id)}
+                            onClick={() => setPostTarget(item)}
                             title={t("postEntry")}
                           >
                             <CheckCircle className="h-4 w-4" />
@@ -268,6 +277,19 @@ export function JournalEntriesTable({
         onOpenChange={setDialogOpen}
         accounts={accounts}
         onSuccess={() => router.refresh()}
+      />
+
+      {/* Post Confirm Dialog */}
+      <ConfirmDialog
+        open={Boolean(postTarget)}
+        onOpenChange={(open) => !open && setPostTarget(null)}
+        title={t("postEntry")}
+        description={`هل أنت متأكد من ترحيل القيد اليومي رقم "${postTarget?.entryNumber}"؟ بعد الترحيل لا يمكن تعديل القيد.`}
+        confirmText={t("postEntry")}
+        cancelText={t("cancel")}
+        variant="default"
+        isLoading={isPosting}
+        onConfirm={handleConfirmPost}
       />
 
       {/* Reverse Confirm Dialog */}

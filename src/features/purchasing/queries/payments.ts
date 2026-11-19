@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 import type { SupplierPaymentPayload } from "../types";
 import { serializeDecimals } from "@/lib/serialization";
+import { clampPagination } from "@/lib/pagination";
 
 export interface GetSupplierPaymentsParams {
   page?: number;
@@ -13,17 +14,13 @@ export interface GetSupplierPaymentsParams {
 }
 
 export async function getSupplierPayments(params: GetSupplierPaymentsParams = {}) {
+  const { page, pageSize, skip, take } = clampPagination(params, 20);
   const {
-    page = 1,
-    pageSize = 20,
     search,
     supplierId,
     fromDate,
     toDate,
   } = params;
-
-  const skip = (Math.max(1, page) - 1) * pageSize;
-  const take = Math.max(1, pageSize);
 
   const where: Prisma.SupplierPaymentWhereInput = {};
 

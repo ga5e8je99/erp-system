@@ -255,7 +255,7 @@ export async function postJournalEntry(tx: DbClient, params: PostJournalParams) 
       await tx.account.update({
         where: { id: account.id },
         data: {
-          balance: account.balance.plus(balanceDelta),
+          balance: { increment: balanceDelta },
         },
       });
     }
@@ -312,7 +312,7 @@ export async function reverseJournalEntry(
     await tx.account.update({
       where: { id: account.id },
       data: {
-        balance: account.balance.plus(balanceDelta),
+        balance: { increment: balanceDelta },
       },
     });
   }

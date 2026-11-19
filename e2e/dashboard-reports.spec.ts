@@ -54,8 +54,13 @@ test.describe("Executive Dashboard, Reports Center & Notifications Workflow", ()
       console.log("Step 4: System notification scan executed");
     }
 
-    // 5. Test Scheduled Job / Cron Route Handler
-    const cronRes = await request.get("/api/cron/notifications?secret=masar_cron_secret");
+    // 5. Test Scheduled Job / Cron Route Handler (requires Bearer token per Phase 1 security requirements)
+    const cronSecret = process.env.CRON_SECRET || "development_cron_secret_32_characters_long";
+    const cronRes = await request.get("/api/cron/notifications", {
+      headers: {
+        Authorization: `Bearer ${cronSecret}`,
+      },
+    });
     expect(cronRes.status()).toBe(200);
     const cronJson = await cronRes.json();
     expect(cronJson.success).toBe(true);
@@ -65,12 +70,12 @@ test.describe("Executive Dashboard, Reports Center & Notifications Workflow", ()
     // 6. Test Reports Center Gallery Hub
     await page.goto("/ar/reports");
     await expect(page.locator("h1")).toContainText("مركز التقارير");
-    await expect(page.getByText("تقارير المبيعات")).toBeVisible();
-    await expect(page.getByText("تقارير المشتريات")).toBeVisible();
-    await expect(page.getByText("تقارير المخزون")).toBeVisible();
-    await expect(page.getByText("تقارير الربحية والهوامش")).toBeVisible();
-    await expect(page.getByText("التقارير المالية والمحاسبية")).toBeVisible();
-    await expect(page.getByText("تقارير الموارد البشرية")).toBeVisible();
+    await expect(page.getByText("تقارير المبيعات").first()).toBeVisible();
+    await expect(page.getByText("تقارير المشتريات").first()).toBeVisible();
+    await expect(page.getByText("تقارير المخزون").first()).toBeVisible();
+    await expect(page.getByText("تقارير الربحية والهوامش").first()).toBeVisible();
+    await expect(page.getByText("التقارير المالية والمحاسبية").first()).toBeVisible();
+    await expect(page.getByText("تقارير الموارد البشرية").first()).toBeVisible();
     console.log("Step 6: Reports Center gallery verified");
 
     // 7. Verify Sales by Customer Report
@@ -83,15 +88,15 @@ test.describe("Executive Dashboard, Reports Center & Notifications Workflow", ()
     // 8. Verify Inventory Valuation Report
     await page.goto("/ar/reports/inventory-valuation");
     await expect(page.locator("h1").first()).toContainText("تقرير تقييم المخزون");
-    await expect(page.getByText("تكلفة الوحدة (WAC)")).toBeVisible();
+    await expect(page.getByText("تكلفة الوحدة (WAC)").first()).toBeVisible();
     await expect(page.getByRole("button", { name: "تصدير Excel (CSV)" })).toBeVisible();
     console.log("Step 8: Inventory valuation report verified");
 
     // 9. Verify Profit by Product Report
     await page.goto("/ar/reports/profit-by-product");
     await expect(page.locator("h1").first()).toContainText("تقرير ربحية المنتجات");
-    await expect(page.getByText("التكلفة (COGS)")).toBeVisible();
-    await expect(page.getByText("مجمل الربح")).toBeVisible();
+    await expect(page.getByText("التكلفة (COGS)").first()).toBeVisible();
+    await expect(page.getByText("مجمل الربح").first()).toBeVisible();
     console.log("Step 9: Profit by product report verified");
 
     // 10. Verify HR Attendance Summary Report

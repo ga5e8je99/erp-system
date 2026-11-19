@@ -1,10 +1,13 @@
 "use server";
 
+import { logger } from "@/lib/logger";
+
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requirePermission } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
 import { Prisma, SalesQuotationStatus, SalesOrderStatus } from "@prisma/client";
+import { toSafeError } from "@/lib/safe-error";
 import {
   salesQuotationSchema,
   type SalesQuotationInput,
@@ -109,10 +112,10 @@ export async function createQuotationAction(
       data: { id: result.id, quotationNumber: result.quotationNumber },
     };
   } catch (error) {
-    console.error("createQuotationAction error:", error);
+    logger.error({ err: error }, "createQuotationAction error:");
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "INTERNAL_ERROR",
+      error: toSafeError(error, "INTERNAL_ERROR"),
     };
   }
 }
@@ -213,10 +216,10 @@ export async function updateQuotationAction(
       data: { id: result.id, quotationNumber: result.quotationNumber },
     };
   } catch (error) {
-    console.error("updateQuotationAction error:", error);
+    logger.error({ err: error }, "updateQuotationAction error:");
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "INTERNAL_ERROR",
+      error: toSafeError(error, "INTERNAL_ERROR"),
     };
   }
 }
@@ -267,10 +270,10 @@ export async function deleteQuotationAction(
 
     return { ok: true, data: { id } };
   } catch (error) {
-    console.error("deleteQuotationAction error:", error);
+    logger.error({ err: error }, "deleteQuotationAction error:");
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "INTERNAL_ERROR",
+      error: toSafeError(error, "INTERNAL_ERROR"),
     };
   }
 }
@@ -361,10 +364,10 @@ export async function convertQuotationToOrderAction(
       data: { orderId: order.id, orderNumber: order.orderNumber },
     };
   } catch (error) {
-    console.error("convertQuotationToOrderAction error:", error);
+    logger.error({ err: error }, "convertQuotationToOrderAction error:");
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "INTERNAL_ERROR",
+      error: toSafeError(error, "INTERNAL_ERROR"),
     };
   }
 }

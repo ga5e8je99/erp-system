@@ -75,8 +75,7 @@ export function SalesReturnDialog({
           value: c.id,
           label: `${c.name} (${c.code})`,
         }));
-      } catch (err) {
-        console.error(err);
+      } catch {
         return [];
       }
     },
@@ -96,8 +95,7 @@ export function SalesReturnDialog({
             raw: p,
           })
         );
-      } catch (err) {
-        console.error(err);
+      } catch {
         return [];
       }
     },

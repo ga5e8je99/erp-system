@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Link } from "@/i18n/routing";
-import { AlertCircle, Loader2, KeyRound } from "lucide-react";
+import { AlertCircle, Loader2, KeyRound, Eye, EyeOff } from "lucide-react";
 
 export function LoginForm({ locale }: { locale: string }) {
   const t = useTranslations("auth");
@@ -21,6 +21,7 @@ export function LoginForm({ locale }: { locale: string }) {
 
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
@@ -52,16 +53,36 @@ export function LoginForm({ locale }: { locale: string }) {
       });
 
       if (!result) {
-        setErrorMessage(t("invalidCredentials"));
+        setErrorMessage(t("serverError"));
+        setIsLoading(false);
+        return;
+      }
+
+      if (result.status && result.status >= 500) {
+        setErrorMessage(t("serverError"));
         setIsLoading(false);
         return;
       }
 
       if (result.error) {
-        if (result.error.includes("RATE_LIMITED") || result.code === "RATE_LIMITED") {
-          setErrorMessage(t("rateLimited"));
-        } else {
+        const err = String(result.error || "");
+        const code = String(result.code || "");
+        if (
+          err.includes("RATE_LIMITED") ||
+          code.includes("rate_limited") ||
+          code.includes("rate-limited")
+        ) {
+          const match = err.match(/RATE_LIMITED:(\d+)/i) || code.match(/(\d+)/);
+          const seconds = match ? parseInt(match[1], 10) : 60;
+          setErrorMessage(t("rateLimitedWithTime", { seconds }));
+        } else if (
+          result.status === 401 ||
+          err === "CredentialsSignin" ||
+          code === "credentials"
+        ) {
           setErrorMessage(t("invalidCredentials"));
+        } else {
+          setErrorMessage(t("serverError"));
         }
         setIsLoading(false);
         return;
@@ -72,18 +93,23 @@ export function LoginForm({ locale }: { locale: string }) {
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "";
       if (msg.includes("RATE_LIMITED")) {
-        setErrorMessage(t("rateLimited"));
+        const match = msg.match(/RATE_LIMITED:(\d+)/i);
+        const seconds = match ? parseInt(match[1], 10) : 60;
+        setErrorMessage(t("rateLimitedWithTime", { seconds }));
       } else {
-        setErrorMessage(t("invalidCredentials"));
+        setErrorMessage(t("serverError"));
       }
       setIsLoading(false);
     }
   };
 
-  const handleFillDemo = () => {
-    setValue("email", "admin@masar.local", { shouldValidate: true });
-    setValue("password", "Admin@12345", { shouldValidate: true });
-  };
+  const isDev = process.env.NODE_ENV !== "production";
+
+  const handleFillDemo = isDev
+    ? () => {
+        setValue("email", "admin@masar.local", { shouldValidate: true });
+      }
+    : undefined;
 
   return (
     <div className="w-full max-w-md space-y-6">
@@ -93,7 +119,10 @@ export function LoginForm({ locale }: { locale: string }) {
       </div>
 
       {errorMessage && (
-        <div className="flex items-center gap-3 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+        <div
+          role="alert"
+          className="flex items-center gap-3 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive animate-in fade-in-50 duration-200"
+        >
           <AlertCircle className="h-5 w-5 shrink-0" />
           <span>{errorMessage}</span>
         </div>
@@ -125,14 +154,29 @@ export function LoginForm({ locale }: { locale: string }) {
               {t("forgotPassword")}
             </Link>
           </div>
-          <Input
-            id="password"
-            type="password"
-            autoComplete="current-password"
-            placeholder={t("passwordPlaceholder")}
-            disabled={isLoading}
-            {...register("password")}
-          />
+          <div className="relative">
+            <Input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
+              placeholder={t("passwordPlaceholder")}
+              disabled={isLoading}
+              className="pe-10"
+              {...register("password")}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((prev) => !prev)}
+              aria-label={showPassword ? t("hidePassword") : t("showPassword")}
+              className="absolute end-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded p-1"
+            >
+              {showPassword ? (
+                <EyeOff className="h-4 w-4" aria-hidden="true" />
+              ) : (
+                <Eye className="h-4 w-4" aria-hidden="true" />
+              )}
+            </button>
+          </div>
           {errors.password && (
             <p className="text-xs text-destructive">{errors.password.message}</p>
           )}
@@ -163,32 +207,31 @@ export function LoginForm({ locale }: { locale: string }) {
         </Button>
       </form>
 
-      {/* Demo Credentials Helper Box */}
-      <div className="rounded-lg border bg-muted/40 p-4 text-xs">
-        <div className="flex items-center justify-between">
-          <span className="font-semibold text-foreground flex items-center gap-1.5">
-            <KeyRound className="h-3.5 w-3.5 text-primary" />
-            {t("demoCredentialsHint")}
-          </span>
-          <Button
-            type="button"
-            variant="ghost"
-            size="xs"
-            onClick={handleFillDemo}
-            className="text-primary hover:text-primary/80"
-          >
-            Auto-fill
-          </Button>
-        </div>
-        <div className="mt-2 space-y-1 font-mono text-muted-foreground">
-          <div>
-            Email: <span className="text-foreground">{t("demoCredentialsEmail")}</span>
+      {/* Demo Credentials Helper Box (Local development only) */}
+      {isDev && handleFillDemo && (
+        <div className="rounded-lg border bg-muted/40 p-4 text-xs">
+          <div className="flex items-center justify-between">
+            <span className="font-semibold text-foreground flex items-center gap-1.5">
+              <KeyRound className="h-3.5 w-3.5 text-primary" />
+              {t("demoCredentialsHint")}
+            </span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="xs"
+              onClick={handleFillDemo}
+              className="text-primary hover:text-primary/80"
+            >
+              {t("autoFill")}
+            </Button>
           </div>
-          <div>
-            Password: <span className="text-foreground">{t("demoCredentialsPass")}</span>
+          <div className="mt-2 space-y-1 font-mono text-muted-foreground">
+            <div>
+              {t("emailLabel")}: <span className="text-foreground">admin@masar.local</span>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

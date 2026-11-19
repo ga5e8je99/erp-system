@@ -33,6 +33,7 @@ import {
   createInvoiceAction,
   updateInvoiceAction,
 } from "../actions/invoices";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 
 interface CustomerMeta {
   balance: number;
@@ -76,8 +77,10 @@ export function InvoiceFormDialog({
   onSuccess,
 }: InvoiceFormDialogProps) {
   const t = useTranslations("sales.invoices");
+  const tConfirm = useTranslations("confirm");
   const isEditing = Boolean(invoice?.id);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [showDiscardConfirm, setShowDiscardConfirm] = React.useState(false);
 
   const [customerId, setCustomerId] = React.useState(
     invoice?.customerId || initialCustomerId || ""
@@ -177,8 +180,7 @@ export function InvoiceFormDialog({
             },
           })
         );
-      } catch (err) {
-        console.error(err);
+      } catch {
         return [];
       }
     },
@@ -272,16 +274,45 @@ export function InvoiceFormDialog({
           toast.error(res.error || "فشل إنشاء الفاتورة");
         }
       }
-    } catch (err) {
-      console.error(err);
+    } catch {
       toast.error("حدث خطأ غير متوقع");
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const isFormDirty = React.useMemo(() => {
+    if (isEditing) {
+      return (
+        customerId !== (invoice?.customerId || "") ||
+        warehouseId !== (invoice?.warehouseId || warehouses[0]?.id || "") ||
+        notes !== (invoice?.notes || "") ||
+        invoiceDiscount !== (invoice?.discount ? Number(invoice.discount) : 0)
+      );
+    }
+    return Boolean(customerId || items.length > 0 || notes.trim() || invoiceDiscount > 0);
+  }, [isEditing, customerId, warehouseId, notes, invoiceDiscount, items.length, invoice, warehouses]);
+
+  const handleRequestClose = (nextOpen: boolean) => {
+    if (!nextOpen) {
+      if (isFormDirty) {
+        setShowDiscardConfirm(true);
+        return;
+      }
+      onOpenChange(false);
+    } else {
+      onOpenChange(true);
+    }
+  };
+
+  const handleConfirmDiscard = () => {
+    setShowDiscardConfirm(false);
+    onOpenChange(false);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <>
+      <Dialog open={open} onOpenChange={handleRequestClose}>
       <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{isEditing ? t("editInvoice") : t("addInvoice")}</DialogTitle>
@@ -310,6 +341,8 @@ export function InvoiceFormDialog({
             <div className="space-y-1.5 sm:col-span-2">
               <Label htmlFor="invoice-customer">{t("customer")} *</Label>
               <ComboboxAsync
+                id="invoice-customer"
+                aria-label={t("customer")}
                 value={customerId}
                 onChange={(val, opt) => {
                   setCustomerId(val);
@@ -391,7 +424,7 @@ export function InvoiceFormDialog({
             <Button
               type="button"
               variant="outline"
-              onClick={() => onOpenChange(false)}
+              onClick={() => handleRequestClose(false)}
               disabled={isSubmitting}
             >
               إلغاء
@@ -407,5 +440,17 @@ export function InvoiceFormDialog({
         </form>
       </DialogContent>
     </Dialog>
+
+    <ConfirmDialog
+      open={showDiscardConfirm}
+      onOpenChange={setShowDiscardConfirm}
+      title={tConfirm("unsavedChangesTitle")}
+      description={tConfirm("unsavedChangesMessage")}
+      confirmText={tConfirm("discard")}
+      cancelText={tConfirm("continueEditing")}
+      variant="destructive"
+      onConfirm={handleConfirmDiscard}
+    />
+  </>
   );
 }

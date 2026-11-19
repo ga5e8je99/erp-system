@@ -37,7 +37,7 @@ docker compose up -d
 ```
 This spins up:
 - PostgreSQL 16 on `localhost:5432`
-- pgAdmin on `localhost:5050` (user: `admin@masar.local`, pass: `adminpassword`)
+- pgAdmin on `localhost:5050` (Local development only — user: `admin@masar.local`, pass: `adminpassword`. Never expose pgAdmin in production environments.)
 
 ### 4. Install Dependencies
 ```bash
@@ -98,25 +98,64 @@ src/
 
 ---
 
+## Production Deployment
+
+### 1. Required Environment Variables
+
+Configure these variables in your hosting environment (Vercel Project Settings or `.env` on VPS):
+
+| Variable | Required | Description |
+|---|---|---|
+| `DATABASE_URL` | Yes | Direct or pooled PostgreSQL connection string (`postgresql://...`) |
+| `AUTH_SECRET` | Yes | 32+ character random secret (`openssl rand -base64 32`) |
+| `CRON_SECRET` | Yes | 24+ character secret for securing automated cron endpoints (`openssl rand -hex 24`) |
+| `BLOB_READ_WRITE_TOKEN` | Yes (Vercel) | Vercel Blob token for cloud file uploads (receipts, avatars, logos) |
+| `ADMIN_INITIAL_PASSWORD` | Yes (Prod Seed) | Secure initial password assigned to `admin@masar.local` during first-time seeding |
+| `AUTH_TRUST_HOST` | Recommended | Set to `true` behind reverse proxies (Vercel, Caddy, Nginx) |
+| `NEXT_PUBLIC_APP_URL` | Recommended | Canonical domain URL (e.g. `https://erp.yourcompany.com`) |
+
+### 2. Deployment Command Sequence
+
+Always execute production deployments in this strict sequence:
+
+```bash
+# Step 1: Install pinned dependencies cleanly
+npm ci
+
+# Step 2: Apply database migrations safely
+npm run db:deploy
+
+# Step 3: Seed essential system data (idempotent: Chart of Accounts, roles, permissions, admin)
+npm run db:seed:prod
+
+# Step 4: Build optimized Next.js production bundle
+npm run build
+```
+
+---
+
 ## Available Scripts
 
 | Script | Description |
 |---|---|
 | `npm run dev` | Start development server on port 3000 |
-| `npm run build` | Build optimized production bundle |
+| `npm run build` | Build optimized production bundle (`prisma generate && next build`) |
 | `npm run start` | Run production server |
 | `npm run typecheck` | Run strict TypeScript checks without emit |
 | `npm run lint` | Run ESLint across codebase |
-| `npm run test` | Run unit tests with Vitest |
-| `npm run test:e2e` | Run end-to-end browser tests with Playwright |
-| `npm run db:migrate` | Run Prisma migrations in development |
-| `npm run db:seed` | Seed database using `tsx prisma/seed.ts` |
+| `npm run test` | Run unit & integration tests with Vitest |
+| `npm run test:e2e` | Run end-to-end browser & accessibility tests with Playwright |
+| `npm run db:migrate` | Create or run Prisma migrations in development (`prisma migrate dev`) |
+| `npm run db:deploy` | Apply pending Prisma migrations in production (`prisma migrate deploy`) |
+| `npm run db:seed` | Seed development database with mock business data (`tsx prisma/seed.ts`) |
+| `npm run db:seed:prod` | Seed production essentials only (COA, roles, permissions, initial admin) |
 | `npm run db:studio` | Open Prisma Studio database viewer |
 
 ---
 
 ## Documentation
 - Production deployment guide: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
+- Security & hardening review: [docs/REVIEW.md](docs/REVIEW.md)
+- Scheduled tasks & cron: [docs/CRON.md](docs/CRON.md)
 - Architecture guidelines: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 - Architectural Decision Records: [docs/DECISIONS.md](docs/DECISIONS.md)
-# erp-system

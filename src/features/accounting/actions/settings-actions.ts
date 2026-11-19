@@ -6,6 +6,7 @@ import { requirePermission } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
 import { accountMappingSchema } from "../schemas";
 import { updateCompanyAccountMappings } from "../services/accounting-service";
+import { toSafeError } from "@/lib/safe-error";
 
 export async function updateAccountMappingsAction(input: unknown) {
   try {
@@ -40,7 +41,6 @@ export async function updateAccountMappingsAction(input: unknown) {
     revalidatePath("/accounting/settings");
     return { ok: true, data: updated };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "فشل تحديث ربط الحسابات";
-    return { ok: false, error: message };
+    return { ok: false, error: toSafeError(error, "فشل تحديث ربط الحسابات") };
   }
 }

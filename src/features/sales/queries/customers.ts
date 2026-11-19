@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 import { StatementOfAccountEntry } from "../types";
 import { serializeDecimals } from "@/lib/serialization";
+import { clampPagination } from "@/lib/pagination";
 
 export interface GetCustomersParams {
   page?: number;
@@ -12,16 +13,12 @@ export interface GetCustomersParams {
 }
 
 export async function getCustomers(params: GetCustomersParams = {}) {
+  const { page, pageSize, skip, take } = clampPagination(params, 20);
   const {
-    page = 1,
-    pageSize = 20,
     search,
     sortBy = "createdAt",
     sortOrder = "desc",
   } = params;
-
-  const skip = (Math.max(1, page) - 1) * pageSize;
-  const take = Math.max(1, pageSize);
 
   const where: Prisma.CustomerWhereInput = {
     deletedAt: null,
@@ -77,6 +74,7 @@ export async function getCustomerById(id: string) {
     where: { id },
     include: {
       invoices: {
+        take: 50,
         orderBy: { issueDate: "desc" },
         include: {
           items: {
@@ -90,6 +88,7 @@ export async function getCustomerById(id: string) {
         },
       },
       orders: {
+        take: 50,
         orderBy: { issueDate: "desc" },
         include: {
           items: {
@@ -100,6 +99,7 @@ export async function getCustomerById(id: string) {
         },
       },
       quotations: {
+        take: 50,
         orderBy: { issueDate: "desc" },
         include: {
           items: {
@@ -110,12 +110,14 @@ export async function getCustomerById(id: string) {
         },
       },
       payments: {
+        take: 50,
         orderBy: { date: "desc" },
         include: {
           invoice: { select: { id: true, invoiceNumber: true } },
         },
       },
       returns: {
+        take: 50,
         orderBy: { createdAt: "desc" },
         include: {
           items: {

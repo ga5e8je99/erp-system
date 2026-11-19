@@ -1,8 +1,11 @@
 "use server";
 
+import { logger } from "@/lib/logger";
+
 import { revalidatePath } from "next/cache";
 import { requirePermission } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
+import { toSafeError } from "@/lib/safe-error";
 import {
   customerPaymentSchema,
   type CustomerPaymentInput,
@@ -70,10 +73,10 @@ export async function recordCustomerPaymentAction(
       },
     };
   } catch (error) {
-    console.error("recordCustomerPaymentAction error:", error);
+    logger.error({ err: error }, "recordCustomerPaymentAction error:");
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "INTERNAL_ERROR",
+      error: toSafeError(error, "INTERNAL_ERROR"),
     };
   }
 }

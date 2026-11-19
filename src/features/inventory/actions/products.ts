@@ -1,10 +1,13 @@
 "use server";
 
+import { logger } from "@/lib/logger";
+
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requirePermission } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
 import { Prisma, StockMovementType } from "@prisma/client";
+import { toSafeError } from "@/lib/safe-error";
 import {
   createProductSchema,
   updateProductSchema,
@@ -121,10 +124,10 @@ export async function createProductAction(
       data: { id: newProduct.id, name: newProduct.name, sku: newProduct.sku },
     };
   } catch (error) {
-    console.error("createProductAction error:", error);
+    logger.error({ err: error }, "createProductAction error:");
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "INTERNAL_ERROR",
+      error: toSafeError(error, "INTERNAL_ERROR"),
     };
   }
 }
@@ -228,10 +231,10 @@ export async function updateProductAction(
 
     return { ok: true, data: { id: updated.id, name: updated.name } };
   } catch (error) {
-    console.error("updateProductAction error:", error);
+    logger.error({ err: error }, "updateProductAction error:");
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "INTERNAL_ERROR",
+      error: toSafeError(error, "INTERNAL_ERROR"),
     };
   }
 }
@@ -274,7 +277,7 @@ export async function toggleProductStatusAction(
   } catch (error) {
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "INTERNAL_ERROR",
+      error: toSafeError(error, "INTERNAL_ERROR"),
     };
   }
 }
@@ -327,7 +330,7 @@ export async function deleteProductAction(
   } catch (error) {
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "INTERNAL_ERROR",
+      error: toSafeError(error, "INTERNAL_ERROR"),
     };
   }
 }
@@ -459,10 +462,10 @@ export async function importProductsCsvAction(
       data: { importedCount, errors },
     };
   } catch (error) {
-    console.error("importProductsCsvAction error:", error);
+    logger.error({ err: error }, "importProductsCsvAction error:");
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "CSV_IMPORT_FAILED",
+      error: toSafeError(error, "CSV_IMPORT_FAILED"),
     };
   }
 }

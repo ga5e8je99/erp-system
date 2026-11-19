@@ -12,6 +12,7 @@ import {
   generateSystemNotifications,
 } from "../services/notification-service";
 import { NotificationType } from "@prisma/client";
+import { toSafeError } from "@/lib/safe-error";
 
 export async function fetchNotificationsAction(filter?: {
   type?: NotificationType;
@@ -38,8 +39,7 @@ export async function fetchNotificationsAction(filter?: {
       },
     };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "فشل جلب الإشعارات";
-    return { ok: false, error: message };
+    return { ok: false, error: toSafeError(error, "فشل جلب الإشعارات") };
   }
 }
 
@@ -56,8 +56,7 @@ export async function markNotificationReadAction(id: string) {
     revalidatePath("/notifications");
     return { ok: true };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "فشل تحديث الإشعار";
-    return { ok: false, error: message };
+    return { ok: false, error: toSafeError(error, "فشل تحديث الإشعار") };
   }
 }
 
@@ -74,8 +73,7 @@ export async function markAllNotificationsReadAction() {
     revalidatePath("/notifications");
     return { ok: true };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "فشل تحديث الإشعارات";
-    return { ok: false, error: message };
+    return { ok: false, error: toSafeError(error, "فشل تحديث الإشعارات") };
   }
 }
 
@@ -92,8 +90,7 @@ export async function deleteNotificationAction(id: string) {
     revalidatePath("/notifications");
     return { ok: true };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "فشل حذف الإشعار";
-    return { ok: false, error: message };
+    return { ok: false, error: toSafeError(error, "فشل حذف الإشعار") };
   }
 }
 
@@ -106,7 +103,6 @@ export async function triggerSystemNotificationScanAction() {
     revalidatePath("/notifications");
     return { ok: true, data: counts };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "فشل فحص الإشعارات التلقائية";
-    return { ok: false, error: message };
+    return { ok: false, error: toSafeError(error, "فشل فحص الإشعارات التلقائية") };
   }
 }

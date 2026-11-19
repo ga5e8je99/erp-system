@@ -111,8 +111,7 @@ export function CustomerFormDialog({
           toast.error(res.error || "فشل إضافة العميل");
         }
       }
-    } catch (err) {
-      console.error(err);
+    } catch {
       toast.error("حدث خطأ غير متوقع");
     } finally {
       setIsSubmitting(false);

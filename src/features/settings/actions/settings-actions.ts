@@ -6,6 +6,7 @@ import { requirePermission } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
 import { fullCompanySettingsSchema } from "../schemas";
 import { getCompanySettings, updateCompanySettings } from "../services/settings-service";
+import { toSafeError } from "@/lib/safe-error";
 
 export async function saveCompanySettingsAction(input: unknown) {
   try {
@@ -48,7 +49,6 @@ export async function saveCompanySettingsAction(input: unknown) {
     revalidatePath("/dashboard");
     return { ok: true, data: updated };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "فشل حفظ إعدادات النظام";
-    return { ok: false, error: message };
+    return { ok: false, error: toSafeError(error, "فشل حفظ إعدادات النظام") };
   }
 }

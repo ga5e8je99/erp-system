@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { Prisma } from "@prisma/client";
+import { clampPagination } from "@/lib/pagination";
 
 export interface AuditLogFilters {
   page?: number;
@@ -13,9 +14,7 @@ export interface AuditLogFilters {
 }
 
 export async function getAuditLogs(filters: AuditLogFilters = {}) {
-  const page = Math.max(1, Number(filters.page || 1));
-  const pageSize = Math.max(1, Math.min(100, Number(filters.pageSize || 20)));
-  const skip = (page - 1) * pageSize;
+  const { page, pageSize, skip, take } = clampPagination(filters, 20);
 
   const where: Prisma.AuditLogWhereInput = {};
 
@@ -60,7 +59,7 @@ export async function getAuditLogs(filters: AuditLogFilters = {}) {
     db.auditLog.findMany({
       where,
       skip,
-      take: pageSize,
+      take,
       orderBy: { createdAt: "desc" },
       include: {
         user: {
@@ -88,15 +87,18 @@ export async function getAuditLogs(filters: AuditLogFilters = {}) {
 export async function getAuditFilterOptions() {
   const [users, distinctEntities, distinctActions] = await Promise.all([
     db.user.findMany({
+      take: 100,
       select: { id: true, name: true, email: true },
       orderBy: { name: "asc" },
     }),
     db.auditLog.findMany({
+      take: 100,
       select: { entity: true },
       distinct: ["entity"],
       orderBy: { entity: "asc" },
     }),
     db.auditLog.findMany({
+      take: 100,
       select: { action: true },
       distinct: ["action"],
       orderBy: { action: "asc" },

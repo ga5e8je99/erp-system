@@ -62,8 +62,7 @@ export function PurchasingLineItemsEditor({
           description: `سعر التكلفة: ${p.costPrice.toLocaleString()} ر.س | الحالي بالمستودع: ${p.stockQuantity} ${p.unitSymbol}`,
           raw: p,
         }));
-      } catch (err) {
-        console.error("Error loading products:", err);
+      } catch {
         return [];
       }
     },

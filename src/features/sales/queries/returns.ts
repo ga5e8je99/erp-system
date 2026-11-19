@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 import { serializeDecimals } from "@/lib/serialization";
+import { clampPagination } from "@/lib/pagination";
 
 export interface GetReturnsParams {
   page?: number;
@@ -10,15 +11,11 @@ export interface GetReturnsParams {
 }
 
 export async function getReturns(params: GetReturnsParams = {}) {
+  const { page, pageSize, skip, take } = clampPagination(params, 20);
   const {
-    page = 1,
-    pageSize = 20,
     search,
     customerId,
   } = params;
-
-  const skip = (Math.max(1, page) - 1) * pageSize;
-  const take = Math.max(1, pageSize);
 
   const where: Prisma.SalesReturnWhereInput = {};
 

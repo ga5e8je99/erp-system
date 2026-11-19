@@ -6,6 +6,7 @@ import { requirePermission } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
 import { generatePayrollSchema, payPayrollSchema } from "../schemas";
 import { serializeDecimals } from "@/lib/serialization";
+import { toSafeError } from "@/lib/safe-error";
 import {
   generatePayrollRun,
   approvePayrollRun,
@@ -51,8 +52,7 @@ export async function generatePayrollRunAction(input: unknown) {
     revalidatePath("/hr/payroll");
     return { ok: true, data: serializeDecimals(run) };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "فشل إنشاء مسير الرواتب";
-    return { ok: false, error: message };
+    return { ok: false, error: toSafeError(error, "فشل إنشاء مسير الرواتب") };
   }
 }
 
@@ -84,8 +84,7 @@ export async function approvePayrollRunAction(runId: string) {
     revalidatePath("/accounting/accounts");
     return { ok: true, data: serializeDecimals(run) };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "فشل اعتماد مسير الرواتب وترحيل القيد";
-    return { ok: false, error: message };
+    return { ok: false, error: toSafeError(error, "فشل اعتماد مسير الرواتب وترحيل القيد") };
   }
 }
 
@@ -130,7 +129,6 @@ export async function payPayrollRunAction(input: unknown) {
     revalidatePath("/accounting/accounts");
     return { ok: true, data: serializeDecimals(run) };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "فشل صرف مسير الرواتب وترحيل القيد";
-    return { ok: false, error: message };
+    return { ok: false, error: toSafeError(error, "فشل صرف مسير الرواتب وترحيل القيد") };
   }
 }

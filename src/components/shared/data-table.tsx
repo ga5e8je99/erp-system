@@ -18,6 +18,7 @@ import { usePathname, useRouter } from "@/i18n/routing";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
+  ArrowLeftRight,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
@@ -53,6 +54,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/shared/empty-state";
+import { clampPagination, ALLOWED_PAGE_SIZES } from "@/lib/pagination";
 
 export interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -93,9 +95,14 @@ export function DataTable<TData, TValue>({
   const searchParams = useSearchParams();
   const t = useTranslations("table");
 
-  // Read initial states from URL params if enabled
-  const urlPage = Number(searchParams.get("page") || "1");
-  const urlPageSize = Number(searchParams.get("pageSize") || "10");
+  // Read initial states from URL params if enabled (clamped to safe bounds)
+  const { page: urlPage, pageSize: urlPageSize } = clampPagination(
+    {
+      page: searchParams.get("page"),
+      pageSize: searchParams.get("pageSize"),
+    },
+    10
+  );
   const urlSearch = searchParams.get("q") || "";
   const urlSort = searchParams.get("sort") || "";
   const urlOrder = searchParams.get("order") === "desc" ? "desc" : "asc";
@@ -323,6 +330,14 @@ export function DataTable<TData, TValue>({
         </div>
       )}
 
+      {/* Mobile Horizontal Scroll Affordance */}
+      <div className="flex items-center justify-end px-1 sm:hidden">
+        <span className="inline-flex items-center gap-1.5 rounded-md border border-border/60 bg-muted/40 px-2 py-0.5 text-[11px] text-muted-foreground">
+          <ArrowLeftRight className="h-3 w-3 text-primary animate-pulse" />
+          <span>{t("scrollHint")}</span>
+        </span>
+      </div>
+
       {/* Table Container */}
       <div className="overflow-hidden rounded-xl border border-border bg-card shadow-2xs">
         <Table>
@@ -413,11 +428,11 @@ export function DataTable<TData, TValue>({
                 }
               }}
             >
-              <SelectTrigger className="h-8 w-16 text-xs">
+              <SelectTrigger className="h-8 w-16 text-xs" aria-label={t("perPage")}>
                 <SelectValue placeholder={String(urlPageSize)} />
               </SelectTrigger>
               <SelectContent side="top">
-                {[10, 20, 50, 100].map((size) => (
+                {ALLOWED_PAGE_SIZES.map((size) => (
                   <SelectItem key={size} value={String(size)}>
                     {size}
                   </SelectItem>
@@ -447,7 +462,7 @@ export function DataTable<TData, TValue>({
               variant="outline"
               size="icon"
               className="h-8 w-8"
-              onClick={() => updateUrlParams({ page: String(urlPage - 1) })}
+              onClick={() => updateUrlParams({ page: String(Math.max(1, urlPage - 1)) })}
               disabled={urlPage <= 1 || isLoading}
               aria-label="Previous page"
             >
@@ -467,7 +482,7 @@ export function DataTable<TData, TValue>({
               variant="outline"
               size="icon"
               className="h-8 w-8"
-              onClick={() => updateUrlParams({ page: String(pageCount) })}
+              onClick={() => updateUrlParams({ page: String(Math.max(1, pageCount)) })}
               disabled={urlPage >= pageCount || isLoading}
               aria-label="Last page"
             >

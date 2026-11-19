@@ -1,5 +1,7 @@
 "use server";
 
+import { logger } from "@/lib/logger";
+
 import bcryptjs from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
@@ -79,7 +81,7 @@ export async function createUserAction(
     if (error instanceof Error && error.name === "ForbiddenError") {
       return { ok: false, error: "FORBIDDEN" };
     }
-    console.error("[CREATE USER ACTION ERROR]", error);
+    logger.error({ err: error }, "[CREATE USER ACTION ERROR]");
     return { ok: false, error: "INTERNAL_SERVER_ERROR" };
   }
 }
@@ -156,7 +158,7 @@ export async function updateUserAction(
     if (error instanceof Error && error.name === "ForbiddenError") {
       return { ok: false, error: "FORBIDDEN" };
     }
-    console.error("[UPDATE USER ACTION ERROR]", error);
+    logger.error({ err: error }, "[UPDATE USER ACTION ERROR]");
     return { ok: false, error: "INTERNAL_SERVER_ERROR" };
   }
 }
@@ -200,7 +202,7 @@ export async function toggleUserStatusAction(
     if (error instanceof Error && error.name === "ForbiddenError") {
       return { ok: false, error: "FORBIDDEN" };
     }
-    console.error("[TOGGLE USER STATUS ACTION ERROR]", error);
+    logger.error({ err: error }, "[TOGGLE USER STATUS ACTION ERROR]");
     return { ok: false, error: "INTERNAL_SERVER_ERROR" };
   }
 }
@@ -244,7 +246,7 @@ export async function resetPasswordAction(
     if (error instanceof Error && error.name === "ForbiddenError") {
       return { ok: false, error: "FORBIDDEN" };
     }
-    console.error("[RESET PASSWORD ACTION ERROR]", error);
+    logger.error({ err: error }, "[RESET PASSWORD ACTION ERROR]");
     return { ok: false, error: "INTERNAL_SERVER_ERROR" };
   }
 }

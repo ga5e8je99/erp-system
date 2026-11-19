@@ -106,8 +106,7 @@ export function PurchaseInvoiceFormDialog({
         value: s.value,
         label: s.label,
       }));
-    } catch (err) {
-      console.error(err);
+    } catch {
       return [];
     }
   }, []);

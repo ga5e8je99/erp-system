@@ -14,11 +14,6 @@ export default function GlobalError({ error, reset }: ErrorProps) {
   const locale = useLocale();
   const isArabic = locale === "ar";
 
-  React.useEffect(() => {
-    // Log client error telemetry
-    console.error("[MASAR_ERP_GLOBAL_ERROR]", error);
-  }, [error]);
-
   return (
     <div className="min-h-[70vh] flex items-center justify-center p-4">
       <div className="max-w-md w-full text-center space-y-6 p-8 rounded-2xl border bg-card shadow-sm animate-in fade-in-50 duration-200">

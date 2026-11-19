@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { Prisma, PurchaseOrderStatus } from "@prisma/client";
 import type { PurchaseOrderPayload } from "../types";
 import { serializeDecimals } from "@/lib/serialization";
+import { clampPagination } from "@/lib/pagination";
 
 export interface GetPurchaseOrdersParams {
   page?: number;
@@ -16,9 +17,8 @@ export interface GetPurchaseOrdersParams {
 }
 
 export async function getPurchaseOrders(params: GetPurchaseOrdersParams = {}) {
+  const { page, pageSize, skip, take } = clampPagination(params, 20);
   const {
-    page = 1,
-    pageSize = 20,
     search,
     status,
     supplierId,
@@ -27,9 +27,6 @@ export async function getPurchaseOrders(params: GetPurchaseOrdersParams = {}) {
     sortBy = "createdAt",
     sortOrder = "desc",
   } = params;
-
-  const skip = (Math.max(1, page) - 1) * pageSize;
-  const take = Math.max(1, pageSize);
 
   const where: Prisma.PurchaseOrderWhereInput = {};
 

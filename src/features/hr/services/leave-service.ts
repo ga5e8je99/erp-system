@@ -6,8 +6,9 @@ import { LeaveBalanceSummary } from "../types";
 
 export { calculateLeaveDays, normalizeDate };
 
-export async function getLeaveTypes() {
+export async function getLeaveTypes(limit = 50) {
   return db.leaveType.findMany({
+    take: limit,
     include: {
       _count: {
         select: { leaveRequests: true },
@@ -85,7 +86,7 @@ export async function getEmployeeLeaveBalance(
   const endOfYear = new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999));
 
   const [leaveTypes, approvedRequests] = await Promise.all([
-    db.leaveType.findMany({ orderBy: { name: "asc" } }),
+    db.leaveType.findMany({ take: 50, orderBy: { name: "asc" } }),
     db.leaveRequest.findMany({
       where: {
         employeeId,
@@ -93,6 +94,7 @@ export async function getEmployeeLeaveBalance(
         startDate: { lte: endOfYear },
         endDate: { gte: startOfYear },
       },
+      take: 100,
     }),
   ]);
 
@@ -139,6 +141,7 @@ export async function getLeaveRequests(params?: {
 
   return db.leaveRequest.findMany({
     where,
+    take: 100,
     include: {
       employee: {
         select: {

@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { AccountType } from "@prisma/client";
 
-export async function getPaymentAccounts() {
+export async function getPaymentAccounts(limit = 50) {
   return db.account.findMany({
     where: {
       type: AccountType.ASSET,
@@ -12,6 +12,7 @@ export async function getPaymentAccounts() {
         { code: { startsWith: "112" } }, // Bank
       ],
     },
+    take: limit,
     select: {
       id: true,
       code: true,

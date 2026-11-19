@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { requirePermission } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
 import { departmentSchema, positionSchema } from "../schemas";
+import { toSafeError } from "@/lib/safe-error";
 import {
   createDepartment,
   updateDepartment,
@@ -45,8 +46,7 @@ export async function createDepartmentAction(input: unknown) {
     revalidatePath("/hr/employees");
     return { ok: true, data: dept };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "فشل إنشاء القسم";
-    return { ok: false, error: message };
+    return { ok: false, error: toSafeError(error, "فشل إنشاء القسم") };
   }
 }
 
@@ -81,8 +81,7 @@ export async function updateDepartmentAction(id: string, input: unknown) {
     revalidatePath("/hr/employees");
     return { ok: true, data: dept };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "فشل تحديث القسم";
-    return { ok: false, error: message };
+    return { ok: false, error: toSafeError(error, "فشل تحديث القسم") };
   }
 }
 
@@ -108,8 +107,7 @@ export async function deleteDepartmentAction(id: string) {
     revalidatePath("/hr/employees");
     return { ok: true, data: dept };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "فشل حذف القسم";
-    return { ok: false, error: message };
+    return { ok: false, error: toSafeError(error, "فشل حذف القسم") };
   }
 }
 
@@ -144,8 +142,7 @@ export async function createPositionAction(input: unknown) {
     revalidatePath("/hr/employees");
     return { ok: true, data: pos };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "فشل إنشاء المسمى الوظيفي";
-    return { ok: false, error: message };
+    return { ok: false, error: toSafeError(error, "فشل إنشاء المسمى الوظيفي") };
   }
 }
 
@@ -180,8 +177,7 @@ export async function updatePositionAction(id: string, input: unknown) {
     revalidatePath("/hr/employees");
     return { ok: true, data: pos };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "فشل تحديث المسمى الوظيفي";
-    return { ok: false, error: message };
+    return { ok: false, error: toSafeError(error, "فشل تحديث المسمى الوظيفي") };
   }
 }
 
@@ -207,7 +203,6 @@ export async function deletePositionAction(id: string) {
     revalidatePath("/hr/employees");
     return { ok: true, data: pos };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "فشل حذف المسمى الوظيفي";
-    return { ok: false, error: message };
+    return { ok: false, error: toSafeError(error, "فشل حذف المسمى الوظيفي") };
   }
 }

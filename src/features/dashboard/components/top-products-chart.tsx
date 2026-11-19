@@ -13,6 +13,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { TopProductItem } from "../types";
 import { useLocale } from "next-intl";
+import { formatNumber } from "@/lib/formatters";
 
 interface TopProductsChartProps {
   data: TopProductItem[];
@@ -27,8 +28,8 @@ export function TopProductsChart({ data }: TopProductsChartProps) {
     setMounted(true);
   }, []);
 
-  const formatNumber = (num: number) => {
-    return num.toLocaleString("en-US");
+  const formatVal = (num: number) => {
+    return formatNumber(num, { locale: isArabic ? "ar-EG" : "en-US", decimals: 0 });
   };
 
   return (
@@ -56,36 +57,46 @@ export function TopProductsChart({ data }: TopProductsChartProps) {
               <BarChart
                 data={data}
                 layout="vertical"
-                margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
+                margin={{
+                  top: 5,
+                  right: isArabic ? 10 : 25,
+                  left: isArabic ? 25 : 10,
+                  bottom: 5,
+                }}
               >
-                <CartesianGrid strokeDasharray="3 3" opacity={0.2} horizontal={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} horizontal={false} />
                 <XAxis
                   type="number"
-                  tick={{ fontSize: 11, fill: "currentColor" }}
+                  tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
                   tickFormatter={(val) => (val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val)}
+                  stroke="hsl(var(--border))"
                 />
                 <YAxis
-                  dataKey="name"
                   type="category"
-                  tick={{ fontSize: 11, fill: "currentColor" }}
+                  dataKey="name"
+                  orientation={isArabic ? "right" : "left"}
+                  tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
                   width={90}
+                  stroke="hsl(var(--border))"
                 />
                 <Tooltip
-                  formatter={(val: unknown, _name: unknown, item: { payload?: { quantitySold?: number } }) => [
-                    `${formatNumber(Number(val))} (${item.payload?.quantitySold ?? 0} ${isArabic ? "قطعة" : "units"})`,
-                    isArabic ? "الإيرادات" : "Revenue",
-                  ]}
+                  wrapperStyle={{ direction: isArabic ? "rtl" : "ltr" }}
+                  formatter={(val: unknown) => [formatVal(Number(val)), ""]}
+                  labelStyle={{ fontWeight: "bold", fontSize: 12, color: "hsl(var(--popover-foreground))" }}
                   contentStyle={{
-                    backgroundColor: "var(--background)",
-                    borderColor: "var(--border)",
+                    backgroundColor: "hsl(var(--popover))",
+                    borderColor: "hsl(var(--border))",
+                    color: "hsl(var(--popover-foreground))",
                     borderRadius: "8px",
                     fontSize: 12,
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
                   }}
                 />
                 <Bar
                   dataKey="totalRevenue"
-                  fill="#0284C7"
-                  radius={[0, 4, 4, 0]}
+                  name={isArabic ? "الإيراد" : "Revenue"}
+                  fill="hsl(var(--primary))"
+                  radius={isArabic ? [4, 0, 0, 4] : [0, 4, 4, 0]}
                   maxBarSize={20}
                 />
               </BarChart>

@@ -1,10 +1,13 @@
 "use server";
 
+import { logger } from "@/lib/logger";
+
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requirePermission } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
 import { Prisma, SalesInvoiceStatus } from "@prisma/client";
+import { toSafeError } from "@/lib/safe-error";
 import {
   salesInvoiceSchema,
   type SalesInvoiceInput,
@@ -115,10 +118,10 @@ export async function createInvoiceAction(
       data: { id: invoice.id, invoiceNumber: invoice.invoiceNumber },
     };
   } catch (error) {
-    console.error("createInvoiceAction error:", error);
+    logger.error({ err: error }, "createInvoiceAction error:");
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "INTERNAL_ERROR",
+      error: toSafeError(error, "INTERNAL_ERROR"),
     };
   }
 }
@@ -215,10 +218,10 @@ export async function updateInvoiceAction(
       data: { id: updated.id, invoiceNumber: updated.invoiceNumber },
     };
   } catch (error) {
-    console.error("updateInvoiceAction error:", error);
+    logger.error({ err: error }, "updateInvoiceAction error:");
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "INTERNAL_ERROR",
+      error: toSafeError(error, "INTERNAL_ERROR"),
     };
   }
 }
@@ -259,10 +262,10 @@ export async function deleteInvoiceAction(
 
     return { ok: true, data: { id } };
   } catch (error) {
-    console.error("deleteInvoiceAction error:", error);
+    logger.error({ err: error }, "deleteInvoiceAction error:");
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "INTERNAL_ERROR",
+      error: toSafeError(error, "INTERNAL_ERROR"),
     };
   }
 }
@@ -303,10 +306,10 @@ export async function issueInvoiceAction(params: {
       data: { id: result.invoice.id, status: result.invoice.status },
     };
   } catch (error) {
-    console.error("issueInvoiceAction error:", error);
+    logger.error({ err: error }, "issueInvoiceAction error:");
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "INTERNAL_ERROR",
+      error: toSafeError(error, "INTERNAL_ERROR"),
     };
   }
 }
@@ -346,10 +349,10 @@ export async function voidInvoiceAction(params: {
 
     return { ok: true, data: result };
   } catch (error) {
-    console.error("voidInvoiceAction error:", error);
+    logger.error({ err: error }, "voidInvoiceAction error:");
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "INTERNAL_ERROR",
+      error: toSafeError(error, "INTERNAL_ERROR"),
     };
   }
 }

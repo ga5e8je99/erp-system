@@ -52,6 +52,7 @@ export async function getEmployees(params?: {
 
   const employees = await db.employee.findMany({
     where,
+    take: 100,
     include: {
       department: true,
       position: true,

@@ -1,4 +1,17 @@
 services:
+  db-migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: masar-migrate
+    restart: "no"
+    command: ["migrate"]
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-masar_user}:${POSTGRES_PASSWORD:-postgrespassword}@postgres:5432/${POSTGRES_DB:-masar_erp}?schema=public
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   app:
     build:
       context: .
@@ -11,14 +24,16 @@ services:
       - AUTH_SECRET=${AUTH_SECRET}
       - AUTH_TRUST_HOST=${AUTH_TRUST_HOST:-true}
       - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
-      - CRON_SECRET=${CRON_SECRET:-masar_cron_secret}
-      - ADMIN_INITIAL_PASSWORD=${ADMIN_INITIAL_PASSWORD:-Admin@12345}
+      - CRON_SECRET=${CRON_SECRET}
+      - ADMIN_INITIAL_PASSWORD=${ADMIN_INITIAL_PASSWORD}
       - SEED_DEMO_DATA=${SEED_DEMO_DATA:-false}
     ports:
       - "3000:3000"
     depends_on:
       postgres:
         condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
     volumes:
       - masar_uploads:/app/public/uploads
     healthcheck:

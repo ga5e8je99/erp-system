@@ -6,6 +6,7 @@ import { requirePermission } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
 import { employeeSchema } from "../schemas";
 import { serializeDecimals } from "@/lib/serialization";
+import { toSafeError } from "@/lib/safe-error";
 import {
   createEmployee,
   updateEmployee,
@@ -48,8 +49,7 @@ export async function createEmployeeAction(input: unknown) {
     revalidatePath("/hr/employees");
     return { ok: true, data: serializeDecimals(employee) };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "فشل إنشاء الموظف";
-    return { ok: false, error: message };
+    return { ok: false, error: toSafeError(error, "فشل إنشاء الموظف") };
   }
 }
 
@@ -90,8 +90,7 @@ export async function updateEmployeeAction(id: string, input: unknown) {
     revalidatePath(`/hr/employees/${id}`);
     return { ok: true, data: serializeDecimals(employee) };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "فشل تحديث بيانات الموظف";
-    return { ok: false, error: message };
+    return { ok: false, error: toSafeError(error, "فشل تحديث بيانات الموظف") };
   }
 }
 
@@ -119,7 +118,6 @@ export async function deleteEmployeeAction(id: string) {
     revalidatePath("/hr/employees");
     return { ok: true, data: serializeDecimals(employee) };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "فشل إنهاء خدمة الموظف";
-    return { ok: false, error: message };
+    return { ok: false, error: toSafeError(error, "فشل إنهاء خدمة الموظف") };
   }
 }

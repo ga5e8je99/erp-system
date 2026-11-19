@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 import { serializeDecimals } from "@/lib/serialization";
+import { clampPagination } from "@/lib/pagination";
 
 export interface GetProductsParams {
   page?: number;
@@ -14,9 +15,8 @@ export interface GetProductsParams {
 }
 
 export async function getProducts(params: GetProductsParams = {}) {
+  const { page, pageSize, skip, take } = clampPagination(params, 20);
   const {
-    page = 1,
-    pageSize = 20,
     search,
     categoryId,
     status = "all",
@@ -24,9 +24,6 @@ export async function getProducts(params: GetProductsParams = {}) {
     sortBy = "createdAt",
     sortOrder = "desc",
   } = params;
-
-  const skip = (Math.max(1, page) - 1) * pageSize;
-  const take = Math.max(1, pageSize);
 
   const where: Prisma.ProductWhereInput = {
     deletedAt: null,

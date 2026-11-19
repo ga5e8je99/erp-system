@@ -134,23 +134,25 @@ docker compose ps postgres
 
 Wait until `postgres` reports `healthy` (takes ~5 seconds).
 
-### Step 4: Apply Database Migrations & Safe Seed
+### Step 4: Apply Database Migrations & Production Essentials Seed
 
-Apply pending schema migrations using `prisma migrate deploy`:
+In Docker Compose, database migrations run automatically on startup via the dedicated `db-migrate` service before `masar-app` starts.
 
-```bash
-# Run migrations inside a temporary app container
-docker compose run --rm app npx prisma migrate deploy
-```
-
-Execute the safe idempotent seed script:
+To run migrations manually:
 
 ```bash
-# Seeds roles, permissions, chart of accounts, and default admin
-docker compose run --rm app npx tsx prisma/seed.ts
+# Run schema migrations via dedicated npm script
+docker compose run --rm app npm run db:deploy
 ```
 
-> **Safe Seed Guarantee**: `prisma/seed.ts` uses idempotent upserts (`update: {}`). It creates missing system accounts and permissions without overwriting existing user passwords, customer balances, stock counts, or document sequence numbers. When `SEED_DEMO_DATA="false"`, sample products and demo invoices are skipped.
+To initialize system essentials (Chart of Accounts, default roles, permissions, administrative account) without demo data:
+
+```bash
+# Idempotent seed: system essentials only (no demo products or mock transactions)
+docker compose run --rm app npm run db:seed:prod
+```
+
+> **Production Safe Seed Guarantee**: `prisma/seed-prod.ts` uses idempotent upserts (`update: {}`). It creates required system accounts and permissions without overwriting existing user passwords, customer balances, stock counts, or sequence counters. Sample products, customers, suppliers, and mock employees are omitted completely.
 
 ### Step 5: Start the Complete Stack with SSL Proxy
 
@@ -270,39 +272,47 @@ In **Vercel Project Settings → Environment Variables**, configure:
 | Variable Name | Environment | Value Description |
 |---|---|---|
 | `DATABASE_URL` | Production, Preview | Pooled PostgreSQL connection string |
-| `AUTH_SECRET` | Production, Preview | Generated 32-character secret |
+| `AUTH_SECRET` | Production, Preview | Generated 32-character secret (`openssl rand -base64 32`) |
 | `AUTH_TRUST_HOST` | Production, Preview | `true` |
 | `NEXT_PUBLIC_APP_URL` | Production | `https://erp.yourcompany.com` |
-| `CRON_SECRET` | Production, Preview | Strong token for `/api/cron/*` endpoints |
+| `CRON_SECRET` | Production, Preview | Strong token for `/api/cron/*` endpoints (min 24 chars) |
+| `BLOB_READ_WRITE_TOKEN` | Production, Preview | Vercel Blob token for cloud uploads (Storage tab) |
+| `ADMIN_INITIAL_PASSWORD` | Production | Secure initial password for admin account seeding |
 | `SEED_DEMO_DATA` | Production | `false` |
 
-### Step 3: Build & Deployment Settings
+### Production Deployment Sequence
 
-1. **Build Command**:
-   ```bash
-   npx prisma generate && next build
-   ```
-2. **Install Command**:
-   ```bash
-   npm ci
-   ```
-3. **Output Directory**: `.next`
+Every production deployment (both Vercel and VPS) must strictly follow this lifecycle order:
+
+```bash
+# 1. Install pinned dependencies cleanly
+npm ci
+
+# 2. Deploy database migrations
+npm run db:deploy
+
+# 3. Seed production essentials (idempotent: COA, roles, permissions, initial admin)
+npm run db:seed:prod
+
+# 4. Build optimized application bundle
+npm run build
+```
 
 ### Step 4: Run Migrations Before Deployment
 
 Because serverless runtime cannot execute DDL commands safely during page requests, run migrations via GitHub Actions or your local terminal before promoting to production:
 
 ```bash
-DATABASE_URL="<DIRECT_UNPOOLED_POSTGRES_URL>" npx prisma migrate deploy
+DATABASE_URL="<DIRECT_UNPOOLED_POSTGRES_URL>" npm run db:deploy
 ```
 
 Then seed essential roles and accounts:
 
 ```bash
-DATABASE_URL="<DIRECT_UNPOOLED_POSTGRES_URL>" SEED_DEMO_DATA="false" npx tsx prisma/seed.ts
+DATABASE_URL="<DIRECT_UNPOOLED_POSTGRES_URL>" npm run db:seed:prod
 ```
 
-> **Important (Serverless Storage)**: The Vercel runtime filesystem is ephemeral. Company logos uploaded through `/api/settings/logo` are stored locally in `/public/uploads`. For a fully serverless deployment, mount an S3-compatible bucket (AWS S3, Cloudflare R2, or Vercel Blob) or use the VPS Docker deployment.
+> **Important (Serverless Storage)**: The Vercel runtime filesystem is ephemeral. Company logos and attachments are stored in Vercel Blob when `BLOB_READ_WRITE_TOKEN` is set in Vercel Storage settings.
 
 ---
 
@@ -314,10 +324,11 @@ DATABASE_URL="<DIRECT_UNPOOLED_POSTGRES_URL>" SEED_DEMO_DATA="false" npx tsx pri
 | `AUTH_SECRET` | Yes | — | Encryption key for Auth.js sessions (min 16 chars, 32 recommended) |
 | `AUTH_TRUST_HOST` | No | `true` | Trust reverse proxy `X-Forwarded-*` headers |
 | `NEXT_PUBLIC_APP_URL` | Yes | `http://localhost:3000` | Canonical public URL used for absolute redirects and QR codes |
-| `CRON_SECRET` | Yes | `masar_cron_secret` | Bearer token authenticating automated background cron tasks |
+| `CRON_SECRET` | Yes | — | Bearer token authenticating automated background cron tasks (min 24 chars in prod) |
+| `BLOB_READ_WRITE_TOKEN`| Vercel | — | Vercel Blob token for cloud file uploads |
 | `NODE_ENV` | No | `production` | Node execution environment |
-| `ADMIN_INITIAL_PASSWORD` | No | `Admin@12345` | Password assigned to `admin@masar.local` during initial seeding |
-| `SEED_DEMO_DATA` | No | `false` | Set to `"true"` to seed sample inventory, sales, and customers |
+| `ADMIN_INITIAL_PASSWORD`| Yes (Prod) | — | Password assigned to `admin@masar.local` during initial seeding |
+| `SEED_DEMO_DATA` | No | `false` | Set to `"true"` to seed sample inventory, sales, and customers in development |
 | `DOMAIN` | VPS | `localhost` | Production domain used by Caddy for automated TLS certificates |
 | `ACME_EMAIL` | VPS | `admin@example.com`| Contact email for Let's Encrypt certificate renewal alerts |
 | `ERROR_WEBHOOK_URL` | No | — | Optional Slack/Discord webhook for centralized error notifications |
@@ -331,14 +342,23 @@ DATABASE_URL="<DIRECT_UNPOOLED_POSTGRES_URL>" SEED_DEMO_DATA="false" npx tsx pri
 Masar ERP exposes a zero-dependency health check endpoint supporting both `GET` and `HEAD` methods.
 
 - **URL**: `https://erp.yourcompany.com/api/health`
-- **Cache Policy**: `Cache-Control: no-cache, no-store, must-revalidate`
-- **Response Format**:
+- **Cache Policy**: `Cache-Control: no-store, max-age=0`
+- **Public Response (`HTTP 200 OK`)**:
+  Public probes (e.g. Uptime Kuma, load balancers, Vercel health checks) receive strictly the status field:
   ```json
   {
-    "status": "ok",
-    "timestamp": "2026-11-16T23:15:00.000Z",
+    "status": "healthy"
+  }
+  ```
+- **Authenticated Diagnostics Response (`Authorization: Bearer <CRON_SECRET>`)**:
+  When invoked with a valid Bearer token matching `CRON_SECRET`, detailed diagnostics are returned:
+  ```json
+  {
+    "status": "healthy",
+    "timestamp": "2026-11-19T18:00:00.000Z",
     "uptime": 1284.5,
-    "version": "1.0.0",
+    "version": "0.1.0",
+    "environment": "production",
     "db": {
       "status": "connected",
       "latencyMs": 2.1
@@ -346,7 +366,7 @@ Masar ERP exposes a zero-dependency health check endpoint supporting both `GET` 
   }
   ```
 - **Error Response (`HTTP 503 Service Unavailable`)**:
-  Returned when the database connection fails or queries time out (>3000ms).
+  Returned when database connectivity fails. Public callers receive `{"status": "unhealthy"}`, while authorized callers receive error diagnostic details.
 
 ### Setting Up Uptime Monitoring
 

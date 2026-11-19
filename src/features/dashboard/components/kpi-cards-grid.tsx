@@ -76,12 +76,12 @@ export function KpiCardsGrid({ kpis, permissions, locale }: KpiCardsGridProps) {
             </div>
             <div className="mt-1 flex items-center gap-1.5 text-[11px]">
               {kpis.salesChangePercent >= 0 ? (
-                <span className="flex items-center text-emerald-600 font-semibold">
+                <span className="flex items-center text-emerald-700 dark:text-emerald-400 font-semibold">
                   <TrendingUp className="me-0.5 h-3 w-3" />
                   +{kpis.salesChangePercent}%
                 </span>
               ) : (
-                <span className="flex items-center text-rose-600 font-semibold">
+                <span className="flex items-center text-rose-700 dark:text-rose-400 font-semibold">
                   <TrendingDown className="me-0.5 h-3 w-3" />
                   {kpis.salesChangePercent}%
                 </span>
@@ -173,11 +173,11 @@ export function KpiCardsGrid({ kpis, permissions, locale }: KpiCardsGridProps) {
           </CardHeader>
           <CardContent className="px-4 pb-3">
             <div className="flex items-center gap-2">
-              <span className="text-xl font-bold font-mono tracking-tight text-rose-600">
+              <span className="text-xl font-bold font-mono tracking-tight text-rose-700 dark:text-rose-400">
                 {kpis.lowStockCount}
               </span>
               {kpis.lowStockCount > 0 && (
-                <Badge variant="destructive" className="h-5 px-1.5 text-[10px]">
+                <Badge className="h-5 px-1.5 text-[10px] bg-rose-700 text-white hover:bg-rose-800">
                   {isArabic ? "يتطلب إجراء" : "Action needed"}
                 </Badge>
               )}

@@ -120,13 +120,14 @@ export async function generateSystemNotifications(): Promise<{
   let overdueCount = 0;
   let leaveRequestCount = 0;
 
-  // 1. Check Low Stock Items
+  // 1. Check Low Stock Items (bounded)
   const products = await db.product.findMany({
     where: {
       deletedAt: null,
       isActive: true,
       trackStock: true,
     },
+    take: 200,
     include: {
       stockLevels: true,
       unit: true,
@@ -171,12 +172,13 @@ export async function generateSystemNotifications(): Promise<{
     }
   }
 
-  // 2. Check Overdue Invoices
+  // 2. Check Overdue Invoices (bounded)
   const overdueInvoices = await db.salesInvoice.findMany({
     where: {
       status: { in: ["ISSUED", "PARTIALLY_PAID"] },
       dueDate: { lt: now },
     },
+    take: 100,
     include: {
       customer: true,
     },
@@ -215,11 +217,12 @@ export async function generateSystemNotifications(): Promise<{
     }
   }
 
-  // 3. Check Pending Leave Requests
+  // 3. Check Pending Leave Requests (bounded)
   const pendingLeaves = await db.leaveRequest.findMany({
     where: {
       status: "PENDING",
     },
+    take: 100,
     include: {
       employee: true,
       leaveType: true,

@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { logger } from "@/lib/logger";
 import {
   DashboardDateRange,
   DashboardPeriodPreset,
@@ -101,10 +102,10 @@ export async function getDashboardKpis(): Promise<DashboardKpis> {
       todayInvoices,
       monthInvoices,
       prevMonthInvoices,
-      unpaidSalesInvoices,
-      unpaidPurchaseInvoices,
-      cashAccounts,
-      allProducts,
+      unpaidSalesAgg,
+      unpaidPurchasesAgg,
+      cashAccountsAgg,
+      lowStockProducts,
     ] = await Promise.all([
       // Today's Sales
       db.salesInvoice.aggregate({
@@ -133,30 +134,30 @@ export async function getDashboardKpis(): Promise<DashboardKpis> {
         },
       }),
 
-      // Receivables Outstanding
-      db.salesInvoice.findMany({
+      // Receivables Outstanding (aggregated in SQL)
+      db.salesInvoice.aggregate({
         where: {
           status: { in: ["ISSUED", "PARTIALLY_PAID"] },
         },
-        select: {
+        _sum: {
           total: true,
           paidAmount: true,
         },
       }),
 
-      // Payables Outstanding
-      db.purchaseInvoice.findMany({
+      // Payables Outstanding (aggregated in SQL)
+      db.purchaseInvoice.aggregate({
         where: {
           status: { in: ["ISSUED", "PARTIALLY_PAID"] },
         },
-        select: {
+        _sum: {
           total: true,
           paidAmount: true,
         },
       }),
 
-      // Cash and Bank accounts (1110, 1120 or by code prefix)
-      db.account.findMany({
+      // Cash and Bank accounts (aggregated in SQL)
+      db.account.aggregate({
         where: {
           isPostable: true,
           OR: [
@@ -164,18 +165,19 @@ export async function getDashboardKpis(): Promise<DashboardKpis> {
             { code: { startsWith: "1120" } },
           ],
         },
-        select: {
+        _sum: {
           balance: true,
         },
       }),
 
-      // Low stock count
+      // Low stock count (bounded sample)
       db.product.findMany({
         where: {
           deletedAt: null,
           isActive: true,
           trackStock: true,
         },
+        take: 200,
         select: {
           reorderLevel: true,
           stockLevels: {
@@ -196,22 +198,19 @@ export async function getDashboardKpis(): Promise<DashboardKpis> {
       salesChangePercent = 100;
     }
 
-    const receivablesOutstanding = unpaidSalesInvoices.reduce((sum, inv) => {
-      const remaining = Number(inv.total) - Number(inv.paidAmount);
-      return sum + (remaining > 0 ? remaining : 0);
-    }, 0);
-
-    const payablesOutstanding = unpaidPurchaseInvoices.reduce((sum, inv) => {
-      const remaining = Number(inv.total) - Number(inv.paidAmount);
-      return sum + (remaining > 0 ? remaining : 0);
-    }, 0);
-
-    const cashAndBankBalance = cashAccounts.reduce(
-      (sum, acc) => sum + Number(acc.balance),
-      0
+    const receivablesOutstanding = Math.max(
+      0,
+      Number(unpaidSalesAgg._sum.total || 0) - Number(unpaidSalesAgg._sum.paidAmount || 0)
     );
 
-    const lowStockCount = allProducts.filter((p) => {
+    const payablesOutstanding = Math.max(
+      0,
+      Number(unpaidPurchasesAgg._sum.total || 0) - Number(unpaidPurchasesAgg._sum.paidAmount || 0)
+    );
+
+    const cashAndBankBalance = Number(cashAccountsAgg._sum.balance || 0);
+
+    const lowStockCount = lowStockProducts.filter((p) => {
       const totalQty = p.stockLevels.reduce((s, sl) => s + Number(sl.quantity), 0);
       return totalQty <= p.reorderLevel;
     }).length;
@@ -227,7 +226,7 @@ export async function getDashboardKpis(): Promise<DashboardKpis> {
       lowStockCount,
     };
   } catch (error) {
-    console.warn("[Dashboard] Database unreachable, serving demo KPIs:", error);
+    logger.warn({ err: error }, "[Dashboard] Database unreachable, serving demo KPIs");
     return {
       todaySales: 12500,
       monthToDateSales: 345000,
@@ -259,6 +258,7 @@ export async function getSalesVsPurchasesLast12Months(
           status: { in: ["ISSUED", "PARTIALLY_PAID", "PAID"] },
           issueDate: { gte: twelveMonthsAgo },
         },
+        take: 1000,
         select: {
           issueDate: true,
           total: true,
@@ -269,6 +269,7 @@ export async function getSalesVsPurchasesLast12Months(
           status: { in: ["ISSUED", "PARTIALLY_PAID", "PAID"] },
           issueDate: { gte: twelveMonthsAgo },
         },
+        take: 1000,
         select: {
           issueDate: true,
           total: true,
@@ -308,7 +309,7 @@ export async function getSalesVsPurchasesLast12Months(
       purchases: Math.round(val.purchases),
     }));
   } catch (err) {
-    console.warn("[Dashboard] Serving demo sales vs purchases:", err);
+    logger.warn({ err: err }, "[Dashboard] Serving demo sales vs purchases:");
     const demoMonths: SalesVsPurchasesMonth[] = [];
     for (let i = 11; i >= 0; i--) {
       const d = subMonths(now, i);
@@ -337,6 +338,7 @@ export async function getTop5Products(
           issueDate: { gte: dateRange.from, lte: dateRange.to },
         },
       },
+      take: 500,
       select: {
         productId: true,
         quantity: true,
@@ -389,7 +391,7 @@ export async function getTop5Products(
 
     return sorted;
   } catch (err) {
-    console.warn("[Dashboard] Serving demo top products:", err);
+    logger.warn({ err: err }, "[Dashboard] Serving demo top products:");
     return [
       { id: "p1", sku: "SKU-001", name: "شاشة ألعاب 27 بوصة IPS 165Hz", quantitySold: 42, totalRevenue: 54600 },
       { id: "p2", sku: "SKU-002", name: "لوحة مفاتيح ميكانيكية لاسلكية RGB", quantitySold: 65, totalRevenue: 29250 },
@@ -414,6 +416,7 @@ export async function getSalesByCategory(
           issueDate: { gte: dateRange.from, lte: dateRange.to },
         },
       },
+      take: 500,
       select: {
         quantity: true,
         unitPrice: true,
@@ -450,7 +453,7 @@ export async function getSalesByCategory(
       }))
       .sort((a, b) => b.totalRevenue - a.totalRevenue);
   } catch (err) {
-    console.warn("[Dashboard] Serving demo categories:", err);
+    logger.warn({ err: err }, "[Dashboard] Serving demo categories:");
     return [
       { name: "شاشات ومعدات عرض", totalRevenue: 120000, percentage: 38 },
       { name: "أجهزة كمبيوتر وملحقات", totalRevenue: 95000, percentage: 30 },
@@ -475,10 +478,12 @@ export async function getCashFlowTrend(
     const [customerPayments, supplierPayments, expenses] = await Promise.all([
       db.customerPayment.findMany({
         where: { date: { gte: sixMonthsAgo } },
+        take: 1000,
         select: { date: true, amount: true },
       }),
       db.supplierPayment.findMany({
         where: { date: { gte: sixMonthsAgo } },
+        take: 1000,
         select: { date: true, amount: true },
       }),
       db.expense.findMany({
@@ -486,6 +491,7 @@ export async function getCashFlowTrend(
           deletedAt: null,
           date: { gte: sixMonthsAgo },
         },
+        take: 1000,
         select: { date: true, amount: true },
       }),
     ]);
@@ -530,7 +536,7 @@ export async function getCashFlowTrend(
       net: Math.round(val.inflow - val.outflow),
     }));
   } catch (err) {
-    console.warn("[Dashboard] Serving demo cashflow:", err);
+    logger.warn({ err: err }, "[Dashboard] Serving demo cashflow:");
     const flowItems: CashFlowMonthItem[] = [];
     for (let i = 5; i >= 0; i--) {
       const d = subMonths(now, i);
@@ -577,7 +583,7 @@ export async function getRecentInvoices(limit = 6): Promise<RecentInvoiceItem[]>
       status: inv.status,
     }));
   } catch (err) {
-    console.warn("[Dashboard] Serving demo invoices:", err);
+    logger.warn({ err: err }, "[Dashboard] Serving demo invoices:");
     return [
       { id: "inv-1", invoiceNumber: "INV-2026-0001", customerName: "شركة النور للتجارة والتوزيع", issueDate: new Date(), total: 18500, status: "PAID" },
       { id: "inv-2", invoiceNumber: "INV-2026-0002", customerName: "مؤسسة الأفق للتوريدات الكهربائية", issueDate: new Date(), total: 34200, status: "PARTIALLY_PAID" },
@@ -629,7 +635,7 @@ export async function getOverdueInvoices(limit = 6): Promise<OverdueInvoiceItem[
       })
       .filter((inv) => inv.remainingAmount > 0);
   } catch (err) {
-    console.warn("[Dashboard] Serving demo overdue invoices:", err);
+    logger.warn({ err: err }, "[Dashboard] Serving demo overdue invoices:");
     return [
       { id: "inv-od-1", invoiceNumber: "INV-2026-0002", customerName: "مؤسسة الأفق للتوريدات الكهربائية", dueDate: subMonths(now, 1), overdueDays: 32, remainingAmount: 14200, total: 34200 },
       { id: "inv-od-2", invoiceNumber: "INV-2026-0003", customerName: "شركة البناء الحديث للمقاولات", dueDate: subMonths(now, 1), overdueDays: 14, remainingAmount: 9400, total: 9400 },
@@ -648,6 +654,7 @@ export async function getLowStockProducts(limit = 6): Promise<LowStockProductIte
         isActive: true,
         trackStock: true,
       },
+      take: 200,
       include: {
         category: { select: { name: true } },
         unit: { select: { symbol: true } },
@@ -676,7 +683,7 @@ export async function getLowStockProducts(limit = 6): Promise<LowStockProductIte
 
     return lowStock;
   } catch (err) {
-    console.warn("[Dashboard] Serving demo low stock products:", err);
+    logger.warn({ err: err }, "[Dashboard] Serving demo low stock products:");
     return [
       { id: "ls-1", sku: "SKU-001", name: "شاشة ألعاب 27 بوصة IPS 165Hz", categoryName: "شاشات", unitSymbol: "قطعة", currentStock: 2, reorderLevel: 5 },
       { id: "ls-2", sku: "SKU-004", name: "سماعة رأس محيطية عازلة للضوضاء", categoryName: "إكسسوارات", unitSymbol: "قطعة", currentStock: 3, reorderLevel: 10 },
@@ -724,7 +731,7 @@ export async function getPendingLeaveRequests(limit = 6): Promise<PendingLeaveIt
       };
     });
   } catch (err) {
-    console.warn("[Dashboard] Serving demo pending leaves:", err);
+    logger.warn({ err: err }, "[Dashboard] Serving demo pending leaves:");
     return [
       { id: "lv-1", employeeName: "محمد عبد الرحمن أحمد", departmentName: "تقنية المعلومات", leaveTypeName: "إجازة اعتيادية", startDate: new Date(), endDate: new Date(), days: 3 },
       { id: "lv-2", employeeName: "سارة خالد محمود", departmentName: "المبيعات والتسويق", leaveTypeName: "إجازة مرضية", startDate: new Date(), endDate: new Date(), days: 2 },

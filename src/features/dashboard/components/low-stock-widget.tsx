@@ -20,11 +20,11 @@ export function LowStockWidget({ products, locale }: LowStockWidgetProps) {
       <CardHeader className="flex flex-row items-center justify-between pb-3">
         <div>
           <div className="flex items-center gap-2">
-            <CardTitle className="text-sm font-semibold text-amber-600">
+            <CardTitle className="text-sm font-semibold text-amber-800 dark:text-amber-300">
               {isArabic ? "تنبيهات انخفاض المخزون" : "Low Stock Alerts"}
             </CardTitle>
             {products.length > 0 && (
-              <Badge className="bg-amber-500/15 text-amber-700 dark:text-amber-400 border-0 h-5 px-1.5 text-[10px]">
+              <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300 border border-amber-200 dark:border-amber-800 h-5 px-1.5 text-[10px]">
                 {products.length}
               </Badge>
             )}

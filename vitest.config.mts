@@ -8,10 +8,16 @@ export default defineConfig({
     fileParallelism: false,
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
     exclude: ["e2e/**", "node_modules/**"],
+    server: {
+      deps: {
+        inline: ["next-auth"],
+      },
+    },
   },
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "./src"),
+      "next/server": path.resolve(import.meta.dirname, "./node_modules/next/server.js"),
     },
   },
 });

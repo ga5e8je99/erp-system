@@ -6,6 +6,7 @@ import { requirePermission } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
 import { journalEntrySchema } from "../schemas";
 import { serializeDecimals } from "@/lib/serialization";
+import { toSafeError } from "@/lib/safe-error";
 import {
   createManualJournalEntry,
   postDraftJournalEntry,
@@ -47,8 +48,7 @@ export async function createJournalEntryAction(input: unknown) {
     revalidatePath("/accounting/accounts");
     return { ok: true, data: serializeDecimals(entry) };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "فشل تسجيل القيد المحاسبي";
-    return { ok: false, error: message };
+    return { ok: false, error: toSafeError(error, "فشل تسجيل القيد المحاسبي") };
   }
 }
 
@@ -78,8 +78,7 @@ export async function postDraftJournalEntryAction(id: string) {
     revalidatePath("/accounting/accounts");
     return { ok: true, data: serializeDecimals(entry) };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "فشل ترحيل القيد المحاسبي";
-    return { ok: false, error: message };
+    return { ok: false, error: toSafeError(error, "فشل ترحيل القيد المحاسبي") };
   }
 }
 
@@ -110,7 +109,6 @@ export async function reverseJournalEntryAction(id: string, reason?: string) {
     revalidatePath("/accounting/accounts");
     return { ok: true, data: serializeDecimals(result) };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "فشل عكس القيد المحاسبي";
-    return { ok: false, error: message };
+    return { ok: false, error: toSafeError(error, "فشل عكس القيد المحاسبي") };
   }
 }

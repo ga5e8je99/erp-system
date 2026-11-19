@@ -1,22 +1,45 @@
 import { NextRequest, NextResponse } from "next/server";
+import crypto from "crypto";
+import { env } from "@/lib/env";
+import { logger } from "@/lib/logger";
 import { generateSystemNotifications } from "@/features/notifications/services/notification-service";
 
 export const dynamic = "force-dynamic";
 
+/**
+ * Constant-time string comparison using crypto.timingSafeEqual
+ * to protect against timing attacks.
+ */
+function safeCompare(provided: string, expected: string): boolean {
+  if (!provided || !expected) return false;
+  const providedBuf = Buffer.from(provided);
+  const expectedBuf = Buffer.from(expected);
+
+  if (providedBuf.length !== expectedBuf.length) {
+    // Constant-time execution even when lengths differ
+    crypto.timingSafeEqual(providedBuf, providedBuf);
+    return false;
+  }
+
+  return crypto.timingSafeEqual(providedBuf, expectedBuf);
+}
+
 export async function GET(request: NextRequest) {
   try {
-    const effectiveSecret = process.env.CRON_SECRET || "masar_cron_secret";
-
     const authHeader = request.headers.get("authorization");
-    const querySecret = request.nextUrl.searchParams.get("secret");
-
-    const token = authHeader?.startsWith("Bearer ")
-      ? authHeader.slice(7)
-      : querySecret;
-
-    if (!token || token !== effectiveSecret) {
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return NextResponse.json(
-        { error: "Unauthorized: Invalid or missing cron secret" },
+        { error: "Unauthorized: Missing Bearer token in Authorization header" },
+        { status: 401 }
+      );
+    }
+
+    const token = authHeader.slice(7).trim();
+    const expectedSecret = env.CRON_SECRET || process.env.CRON_SECRET || "";
+
+    if (!expectedSecret || !safeCompare(token, expectedSecret)) {
+      return NextResponse.json(
+        { error: "Unauthorized: Invalid cron secret" },
         { status: 401 }
       );
     }
@@ -34,8 +57,11 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Internal Server Error";
-    return NextResponse.json({ success: false, error: message }, { status: 500 });
+    logger.error({ err: error }, "Cron execution failed");
+    return NextResponse.json(
+      { success: false, error: "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }
 

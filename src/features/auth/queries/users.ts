@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { Prisma } from "@prisma/client";
+import { clampPagination } from "@/lib/pagination";
 
 export interface GetUsersParams {
   search?: string;
@@ -10,7 +11,8 @@ export interface GetUsersParams {
 }
 
 export async function getUsersList(params: GetUsersParams = {}) {
-  const { search, roleId, isActive, page = 1, pageSize = 20 } = params;
+  const { page, pageSize, skip, take } = clampPagination(params, 20);
+  const { search, roleId, isActive } = params;
 
   const where: Prisma.UserWhereInput = {
     deletedAt: null,
@@ -35,6 +37,8 @@ export async function getUsersList(params: GetUsersParams = {}) {
     db.user.count({ where }),
     db.user.findMany({
       where,
+      skip,
+      take,
       include: {
         role: {
           select: {
@@ -44,22 +48,24 @@ export async function getUsersList(params: GetUsersParams = {}) {
         },
       },
       orderBy: { createdAt: "desc" },
-      skip: (page - 1) * pageSize,
-      take: pageSize,
     }),
   ]);
 
   return {
     users,
     total,
-    page,
-    pageSize,
-    totalPages: Math.ceil(total / pageSize),
+    pagination: {
+      page,
+      pageSize,
+      total,
+      totalPages: Math.ceil(total / pageSize),
+    },
   };
 }
 
-export async function getRolesForSelect() {
+export async function getRolesForSelect(limit = 50) {
   return db.role.findMany({
+    take: limit,
     select: {
       id: true,
       name: true,
@@ -72,6 +78,7 @@ export async function getRolesForSelect() {
 export async function getRolesWithPermissions() {
   const [roles, permissions] = await Promise.all([
     db.role.findMany({
+      take: 50,
       include: {
         permissions: {
           select: {
@@ -87,6 +94,7 @@ export async function getRolesWithPermissions() {
       orderBy: { name: "asc" },
     }),
     db.permission.findMany({
+      take: 200,
       orderBy: [{ module: "asc" }, { key: "asc" }],
     }),
   ]);

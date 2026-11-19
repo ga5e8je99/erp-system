@@ -1,6 +1,7 @@
 import { Prisma, AccountType, JournalStatus } from "@prisma/client";
 import { db } from "@/lib/db";
 import { getNextDocumentNumber } from "@/lib/sequence";
+import { clampPagination } from "@/lib/pagination";
 import {
   AccountTreeNode,
   JournalEntryListItem,
@@ -29,6 +30,7 @@ import {
 export async function getChartOfAccountsTree(): Promise<AccountTreeNode[]> {
   const accounts = await db.account.findMany({
     where: { deletedAt: null },
+    take: 500,
     orderBy: { code: "asc" },
   });
 
@@ -97,6 +99,7 @@ export async function getFlatAccountsList(options?: {
 
   const accounts = await db.account.findMany({
     where,
+    take: 200,
     orderBy: { code: "asc" },
     select: {
       id: true,
@@ -243,9 +246,7 @@ export async function listJournalEntries(params?: {
   total: number;
   totalPages: number;
 }> {
-  const page = Math.max(1, params?.page || 1);
-  const pageSize = Math.min(100, Math.max(1, params?.pageSize || 20));
-  const skip = (page - 1) * pageSize;
+  const { pageSize, skip, take } = clampPagination(params, 20);
 
   const where: Prisma.JournalEntryWhereInput = {};
 
@@ -282,7 +283,7 @@ export async function listJournalEntries(params?: {
     db.journalEntry.findMany({
       where,
       skip,
-      take: pageSize,
+      take,
       orderBy: { date: "desc" },
       include: {
         lines: {
@@ -514,8 +515,9 @@ export async function reverseJournalEntryAction(
 // 3. Fiscal Periods Services
 // ============================================================================
 
-export async function listFiscalPeriods(): Promise<FiscalPeriodItem[]> {
+export async function listFiscalPeriods(limit = 100): Promise<FiscalPeriodItem[]> {
   const periods = await db.fiscalPeriod.findMany({
+    take: limit,
     orderBy: { startDate: "desc" },
   });
 
@@ -657,9 +659,7 @@ export async function listExpenses(params?: {
   total: number;
   totalPages: number;
 }> {
-  const page = Math.max(1, params?.page || 1);
-  const pageSize = Math.min(100, Math.max(1, params?.pageSize || 20));
-  const skip = (page - 1) * pageSize;
+  const { pageSize, skip, take } = clampPagination(params, 20);
 
   const where: Prisma.ExpenseWhereInput = {
     deletedAt: null,
@@ -697,7 +697,7 @@ export async function listExpenses(params?: {
     db.expense.findMany({
       where,
       skip,
-      take: pageSize,
+      take,
       orderBy: { date: "desc" },
       include: {
         expenseAccount: { select: { id: true, code: true, name: true } },

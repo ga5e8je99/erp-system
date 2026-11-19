@@ -9,6 +9,7 @@ import {
   leaveRequestSchema,
   leaveApprovalSchema,
 } from "../schemas";
+import { toSafeError } from "@/lib/safe-error";
 import {
   createLeaveType,
   updateLeaveType,
@@ -47,8 +48,7 @@ export async function createLeaveTypeAction(input: unknown) {
     revalidatePath("/hr/leave");
     return { ok: true, data: leaveType };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "فشل إنشاء نوع الإجازة";
-    return { ok: false, error: message };
+    return { ok: false, error: toSafeError(error, "فشل إنشاء نوع الإجازة") };
   }
 }
 
@@ -82,8 +82,7 @@ export async function updateLeaveTypeAction(id: string, input: unknown) {
     revalidatePath("/hr/leave");
     return { ok: true, data: leaveType };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "فشل تحديث نوع الإجازة";
-    return { ok: false, error: message };
+    return { ok: false, error: toSafeError(error, "فشل تحديث نوع الإجازة") };
   }
 }
 
@@ -108,8 +107,7 @@ export async function deleteLeaveTypeAction(id: string) {
     revalidatePath("/hr/leave");
     return { ok: true, data: leaveType };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "فشل حذف نوع الإجازة";
-    return { ok: false, error: message };
+    return { ok: false, error: toSafeError(error, "فشل حذف نوع الإجازة") };
   }
 }
 
@@ -149,8 +147,7 @@ export async function createLeaveRequestAction(input: unknown) {
     revalidatePath(`/hr/employees/${request.employeeId}`);
     return { ok: true, data: request };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "فشل تقديم طلب الإجازة";
-    return { ok: false, error: message };
+    return { ok: false, error: toSafeError(error, "فشل تقديم طلب الإجازة") };
   }
 }
 
@@ -194,7 +191,6 @@ export async function approveOrRejectLeaveRequestAction(input: unknown) {
     revalidatePath(`/hr/employees/${request.employeeId}`);
     return { ok: true, data: request };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "فشل تعديل حالة طلب الإجازة";
-    return { ok: false, error: message };
+    return { ok: false, error: toSafeError(error, "فشل تعديل حالة طلب الإجازة") };
   }
 }

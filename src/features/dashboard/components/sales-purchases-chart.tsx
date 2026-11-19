@@ -14,6 +14,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { SalesVsPurchasesMonth } from "../types";
 import { useLocale } from "next-intl";
+import { formatNumber } from "@/lib/formatters";
 
 interface SalesPurchasesChartProps {
   data: SalesVsPurchasesMonth[];
@@ -28,8 +29,8 @@ export function SalesPurchasesChart({ data }: SalesPurchasesChartProps) {
     setMounted(true);
   }, []);
 
-  const formatNumber = (num: number) => {
-    return num.toLocaleString("en-US");
+  const formatVal = (num: number) => {
+    return formatNumber(num, { locale: isArabic ? "ar-EG" : "en-US", decimals: 0 });
   };
 
   return (
@@ -52,41 +53,55 @@ export function SalesPurchasesChart({ data }: SalesPurchasesChartProps) {
             </div>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data} margin={{ top: 10, right: 10, left: 10, bottom: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" opacity={0.2} vertical={false} />
+              <BarChart
+                data={data}
+                margin={{
+                  top: 10,
+                  right: isArabic ? 20 : 10,
+                  left: isArabic ? 10 : 20,
+                  bottom: 20,
+                }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} vertical={false} />
                 <XAxis
                   dataKey="monthLabel"
-                  tick={{ fontSize: 11, fill: "currentColor" }}
+                  tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
                   interval={0}
                   angle={-25}
                   textAnchor="end"
                   height={45}
+                  stroke="hsl(var(--border))"
                 />
                 <YAxis
-                  tick={{ fontSize: 11, fill: "currentColor" }}
+                  orientation={isArabic ? "right" : "left"}
+                  tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
                   tickFormatter={(val) => (val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val)}
-                  width={40}
+                  width={45}
+                  stroke="hsl(var(--border))"
                 />
                 <Tooltip
-                  formatter={(val: unknown) => [`${formatNumber(Number(val))}`, ""]}
-                  labelStyle={{ fontWeight: "bold", fontSize: 12 }}
+                  wrapperStyle={{ direction: isArabic ? "rtl" : "ltr" }}
+                  formatter={(val: unknown) => [formatVal(Number(val)), ""]}
+                  labelStyle={{ fontWeight: "bold", fontSize: 12, color: "hsl(var(--popover-foreground))" }}
                   contentStyle={{
-                    backgroundColor: "var(--background)",
-                    borderColor: "var(--border)",
+                    backgroundColor: "hsl(var(--popover))",
+                    borderColor: "hsl(var(--border))",
+                    color: "hsl(var(--popover-foreground))",
                     borderRadius: "8px",
                     fontSize: 12,
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
                   }}
                 />
                 <Legend
                   verticalAlign="top"
-                  align="right"
+                  align={isArabic ? "left" : "right"}
                   iconType="circle"
                   wrapperStyle={{ fontSize: 12, paddingBottom: 10 }}
                 />
                 <Bar
                   dataKey="sales"
                   name={isArabic ? "المبيعات" : "Sales"}
-                  fill="#0F766E"
+                  fill="hsl(var(--primary))"
                   radius={[4, 4, 0, 0]}
                   maxBarSize={28}
                 />

@@ -96,8 +96,7 @@ export function SupplierPaymentDialog({
         label: s.label,
         raw: s,
       }));
-    } catch (err) {
-      console.error(err);
+    } catch {
       return [];
     }
   }, []);

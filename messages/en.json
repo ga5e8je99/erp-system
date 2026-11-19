@@ -109,7 +109,8 @@
     "bulkActions": "Bulk Actions",
     "deleteSelected": "Delete Selected",
     "filter": "Filter",
-    "resetFilter": "Reset"
+    "resetFilter": "Reset",
+    "scrollHint": "Scroll horizontally to view more columns"
   },
   "forms": {
     "required": "Required",
@@ -131,7 +132,17 @@
     "confirm": "Confirm",
     "cancel": "Cancel",
     "deleting": "Deleting...",
-    "processing": "Processing..."
+    "processing": "Processing...",
+    "unsavedChangesTitle": "Unsaved Changes",
+    "unsavedChangesMessage": "You have unsaved changes. Are you sure you want to discard them and close the form?",
+    "discard": "Discard Changes",
+    "continueEditing": "Continue Editing",
+    "postJournalTitle": "Confirm Journal Entry Posting",
+    "postJournalMessage": "Are you sure you want to post this journal entry? Once posted, it cannot be edited, only reversed.",
+    "post": "Post Entry",
+    "approvePayrollTitle": "Confirm Payroll Run Approval",
+    "approvePayrollMessage": "This will approve the payroll run and automatically post the salary accrual entry to the general ledger.",
+    "approve": "Approve & Post"
   },
   "emptyState": {
     "defaultTitle": "No items found",
@@ -210,16 +221,26 @@
     "signingIn": "Signing in...",
     "invalidCredentials": "Invalid credentials. Please verify and try again.",
     "rateLimited": "Too many failed attempts. Please wait 15 minutes before trying again.",
-    "demoCredentialsHint": "Demo Admin Credentials:",
-    "demoCredentialsEmail": "admin@masar.local",
-    "demoCredentialsPass": "Admin@12345",
+    "demoCredentialsHint": "Development Admin Account:",
     "heroTitle": "Unified & Intelligent Trading ERP",
     "heroDescription": "Seamlessly manage inventory, quotations, invoicing, general ledger, and human resources.",
     "forgotPasswordTitle": "Reset Password",
     "forgotPasswordDescription": "Enter your email and the administrator will be notified to assist you.",
     "backToLogin": "Back to Sign In",
     "resetRequestSent": "If this email is registered, the administrator has been notified.",
-    "sendResetLink": "Send Reset Link"
+    "sendResetLink": "Send Reset Link",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "rateLimitedWithTime": "Too many failed attempts. Please wait {seconds} seconds before trying again.",
+    "serverError": "An unexpected server error occurred. Please try again later.",
+    "heroBadge": "Advanced Enterprise Resource Planning",
+    "heroSubBadge": "Enterprise Trading & Distribution",
+    "autoFill": "Auto-fill",
+    "featureMultiWarehouse": "Multi-warehouse management with real-time stock tracking and safety stock thresholds",
+    "featureSalesCycle": "Complete sales cycle: quotations, sales orders, and electronic invoicing",
+    "featureAccounting": "Chart of accounts, double-entry journal entries, and GAAP-compliant cost centers",
+    "featureAuditSecurity": "Comprehensive audit logging with granular role-based access controls",
+    "version": "Version"
   },
   "forbidden": {
     "title": "Access Denied (403)",
@@ -1174,5 +1195,11 @@
       "title": "Monthly Payroll Runs",
       "description": "Generate monthly payroll runs, calculate allowances and deductions, and post double-entry journals."
     }
+  },
+  "settings": {
+    "searchPlaceholder": "Search tabs and settings...",
+    "groupGeneral": "General Settings",
+    "groupFinancial": "Financial & Accounting",
+    "groupOperations": "Operations & Rules"
   }
 }

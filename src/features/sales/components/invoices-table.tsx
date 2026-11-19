@@ -210,7 +210,7 @@ export function InvoicesTable({
         cell: ({ row }) => {
           const paid = Number(row.original.paidAmount);
           return (
-            <span className="font-mono text-xs text-emerald-600 font-semibold">
+            <span className="font-mono text-xs text-emerald-700 dark:text-emerald-400 font-semibold">
               {paid > 0
                 ? `${paid.toLocaleString(undefined, { minimumFractionDigits: 2 })} ر.س`
                 : "—"}
@@ -275,7 +275,7 @@ export function InvoicesTable({
                   variant="outline"
                   size="sm"
                   onClick={() => setPaymentTarget(inv)}
-                  className="h-8 text-xs flex items-center gap-1 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                  className="h-8 text-xs flex items-center gap-1 text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/40"
                 >
                   <CreditCard className="h-3.5 w-3.5" />
                   <span>سند قبض</span>

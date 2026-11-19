@@ -27,14 +27,16 @@ export async function getTrialBalanceReport(params?: {
 
   const accounts = await db.account.findMany({
     where: { deletedAt: null },
+    take: 500,
     orderBy: { code: "asc" },
   });
 
-  // Fetch all journal lines for posted entries
+  // Fetch all journal lines for posted entries within period
   const allLines = await db.journalLine.findMany({
     where: {
       entry: {
         status: JournalStatus.POSTED,
+        date: { lte: endDate },
       },
     },
     include: {
@@ -183,8 +185,8 @@ export async function getGeneralLedgerReport(params: {
   const isDebitNormal =
     targetAccount.type === AccountType.ASSET || targetAccount.type === AccountType.EXPENSE;
 
-  // Calculate opening balance before startDate
-  const priorLines = await db.journalLine.findMany({
+  // Calculate opening balance before startDate using SQL aggregation
+  const priorAgg = await db.journalLine.aggregate({
     where: {
       accountId: targetAccount.id,
       entry: {
@@ -192,17 +194,14 @@ export async function getGeneralLedgerReport(params: {
         date: { lt: startDate },
       },
     },
-    select: { debit: true, credit: true },
+    _sum: { debit: true, credit: true },
   });
 
-  let beginningBalance = 0;
-  priorLines.forEach((l) => {
-    const d = Number(l.debit);
-    const c = Number(l.credit);
-    beginningBalance += isDebitNormal ? d - c : c - d;
-  });
+  const priorDebit = Number(priorAgg._sum.debit || 0);
+  const priorCredit = Number(priorAgg._sum.credit || 0);
+  const beginningBalance = isDebitNormal ? priorDebit - priorCredit : priorCredit - priorDebit;
 
-  // Fetch lines in period
+  // Fetch lines in period (bounded to 1000)
   const periodJournalLines = await db.journalLine.findMany({
     where: {
       accountId: targetAccount.id,
@@ -211,6 +210,7 @@ export async function getGeneralLedgerReport(params: {
         date: { gte: startDate, lte: endDate },
       },
     },
+    take: 1000,
     include: {
       entry: {
         select: {
@@ -278,6 +278,7 @@ export async function getProfitLossReport(params?: {
       type: { in: [AccountType.REVENUE, AccountType.EXPENSE] },
       deletedAt: null,
     },
+    take: 500,
     include: {
       journalLines: {
         where: {
@@ -370,6 +371,7 @@ export async function getBalanceSheetReport(params?: {
       type: { in: [AccountType.ASSET, AccountType.LIABILITY, AccountType.EQUITY] },
       deletedAt: null,
     },
+    take: 500,
     include: {
       journalLines: {
         where: {
@@ -511,6 +513,7 @@ export async function getAgingReport(params: {
   if (params.type === "CUSTOMERS") {
     const customers = await db.customer.findMany({
       where: { deletedAt: null },
+      take: 500,
       include: {
         invoices: {
           where: {
@@ -567,6 +570,7 @@ export async function getAgingReport(params: {
   } else {
     const suppliers = await db.supplier.findMany({
       where: { deletedAt: null },
+      take: 500,
       include: {
         invoices: {
           where: {
@@ -652,6 +656,7 @@ export async function getTaxSummaryReport(params?: {
         status: { in: ["ISSUED", "PARTIALLY_PAID", "PAID"] },
         issueDate: dateFilter,
       },
+      take: 1000,
       select: { subtotal: true, discount: true, tax: true },
     }),
     // Sales Returns
@@ -659,6 +664,7 @@ export async function getTaxSummaryReport(params?: {
       where: {
         createdAt: dateFilter,
       },
+      take: 1000,
       select: { subtotal: true, tax: true },
     }),
     // Purchase Invoices
@@ -667,6 +673,7 @@ export async function getTaxSummaryReport(params?: {
         status: { in: ["ISSUED", "PARTIALLY_PAID", "PAID"] },
         issueDate: dateFilter,
       },
+      take: 1000,
       select: { subtotal: true, discount: true, tax: true },
     }),
     // Purchase Returns
@@ -674,6 +681,7 @@ export async function getTaxSummaryReport(params?: {
       where: {
         createdAt: dateFilter,
       },
+      take: 1000,
       select: { subtotal: true, tax: true },
     }),
   ]);

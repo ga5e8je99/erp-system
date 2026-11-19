@@ -9,9 +9,10 @@ export interface CategoryTreeNode {
   children: CategoryTreeNode[];
 }
 
-export async function getCategories() {
+export async function getCategories(limit = 200) {
   const categories = await db.category.findMany({
     where: { deletedAt: null },
+    take: limit,
     orderBy: { name: "asc" },
     include: {
       parent: {
@@ -26,9 +27,10 @@ export async function getCategories() {
   return categories;
 }
 
-export async function getCategoriesTree(): Promise<CategoryTreeNode[]> {
+export async function getCategoriesTree(limit = 200): Promise<CategoryTreeNode[]> {
   const allCategories = await db.category.findMany({
     where: { deletedAt: null },
+    take: limit,
     orderBy: { name: "asc" },
     include: {
       _count: {

@@ -51,6 +51,7 @@ export async function getSalesByCustomerReport(
         }
         : {}),
     },
+    take: 200,
     include: {
       invoices: {
         where: {
@@ -112,6 +113,7 @@ export async function getSalesByProductReport(
           : {}),
       },
     },
+    take: 500,
     include: {
       product: {
         include: {
@@ -178,13 +180,14 @@ export async function getSalesBySalespersonReport(
 ): Promise<SalesBySalespersonRow[]> {
   const { startDate, endDate } = parseDateRange(filter.from, filter.to);
 
-  // Find audit logs for invoice creations/issuances
+  // Find audit logs for invoice creations/issuances (bounded to 500)
   const logs = await db.auditLog.findMany({
     where: {
       entity: "SalesInvoice",
       action: { in: ["INVOICE_CREATE", "INVOICE_ISSUE"] },
       createdAt: { gte: startDate, lte: endDate },
     },
+    take: 500,
     include: {
       user: {
         select: { id: true, name: true, email: true },
@@ -199,6 +202,7 @@ export async function getSalesBySalespersonReport(
       id: { in: invoiceIds },
       status: { in: ["ISSUED", "PARTIALLY_PAID", "PAID"] },
     },
+    take: 500,
     select: { id: true, total: true },
   });
 
@@ -235,6 +239,7 @@ export async function getSalesBySalespersonReport(
   if (userMap.size === 0) {
     const users = await db.user.findMany({
       where: { isActive: true },
+      take: 100,
       select: { id: true, name: true, email: true },
     });
     return users.map((u) => ({
@@ -278,6 +283,7 @@ export async function getPurchasesBySupplierReport(
         }
         : {}),
     },
+    take: 200,
     include: {
       invoices: {
         where: {
@@ -333,6 +339,7 @@ export async function getInventoryValuationReport(
         }
         : {}),
     },
+    take: 500,
     include: {
       category: { select: { name: true } },
       unit: { select: { symbol: true } },
@@ -385,6 +392,7 @@ export async function getStockMovementSummaryReport(
         }
         : {}),
     },
+    take: 500,
     include: {
       unit: { select: { symbol: true } },
       movements: {
@@ -463,6 +471,7 @@ export async function getProfitByProductReport(
           : {}),
       },
     },
+    take: 500,
     include: {
       product: {
         include: {
@@ -552,6 +561,7 @@ export async function getHrAttendanceSummaryReport(
         }
         : {}),
     },
+    take: 200,
     include: {
       department: { select: { name: true } },
       position: { select: { title: true } },

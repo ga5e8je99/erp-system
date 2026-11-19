@@ -29,6 +29,7 @@ import {
 import { journalEntrySchema, JournalEntryFormValues } from "../schemas";
 import { createJournalEntryAction } from "../actions/journal-actions";
 import { formatCurrency } from "@/lib/money";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 
 interface JournalEntryFormDialogProps {
   open: boolean;
@@ -44,6 +45,8 @@ export function JournalEntryFormDialog({
   onSuccess,
 }: JournalEntryFormDialogProps) {
   const t = useTranslations("accounting.journal");
+  const tConfirm = useTranslations("confirm");
+  const [showDiscardConfirm, setShowDiscardConfirm] = React.useState(false);
 
   const todayStr = React.useMemo(() => format(new Date(), "yyyy-MM-dd"), []);
 
@@ -59,6 +62,24 @@ export function JournalEntryFormDialog({
       ],
     },
   });
+
+  const handleRequestClose = (nextOpen: boolean) => {
+    if (!nextOpen) {
+      if (form.formState.isDirty) {
+        setShowDiscardConfirm(true);
+        return;
+      }
+      onOpenChange(false);
+    } else {
+      onOpenChange(true);
+    }
+  };
+
+  const handleConfirmDiscard = () => {
+    setShowDiscardConfirm(false);
+    form.reset();
+    onOpenChange(false);
+  };
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -118,8 +139,9 @@ export function JournalEntryFormDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+    <>
+      <Dialog open={open} onOpenChange={handleRequestClose}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t("addNewJournalEntry")}</DialogTitle>
           <DialogDescription>{t("addNewJournalEntryDesc")}</DialogDescription>
@@ -333,7 +355,7 @@ export function JournalEntryFormDialog({
           )}
 
           <DialogFooter className="pt-2 gap-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button type="button" variant="outline" onClick={() => handleRequestClose(false)}>
               {t("cancel")}
             </Button>
             <Button
@@ -346,5 +368,17 @@ export function JournalEntryFormDialog({
         </form>
       </DialogContent>
     </Dialog>
+
+    <ConfirmDialog
+      open={showDiscardConfirm}
+      onOpenChange={setShowDiscardConfirm}
+      title={tConfirm("unsavedChangesTitle")}
+      description={tConfirm("unsavedChangesMessage")}
+      confirmText={tConfirm("discard")}
+      cancelText={tConfirm("continueEditing")}
+      variant="destructive"
+      onConfirm={handleConfirmDiscard}
+    />
+  </>
   );
 }

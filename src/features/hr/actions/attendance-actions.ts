@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { requirePermission } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
 import { attendanceBulkSchema, manualCheckInOutSchema } from "../schemas";
+import { toSafeError } from "@/lib/safe-error";
 import {
   saveBulkAttendance,
   recordManualCheckInOut,
@@ -43,8 +44,7 @@ export async function saveBulkAttendanceAction(input: unknown) {
     revalidatePath("/hr/attendance");
     return { ok: true, data: records };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "فشل حفظ كشف الحضور والانصراف";
-    return { ok: false, error: message };
+    return { ok: false, error: toSafeError(error, "فشل حفظ كشف الحضور والانصراف") };
   }
 }
 
@@ -83,7 +83,6 @@ export async function recordManualCheckInOutAction(input: unknown) {
     revalidatePath(`/hr/employees/${record.employeeId}`);
     return { ok: true, data: record };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "فشل تسجيل حضور الموظف";
-    return { ok: false, error: message };
+    return { ok: false, error: toSafeError(error, "فشل تسجيل حضور الموظف") };
   }
 }

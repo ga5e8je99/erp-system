@@ -1,9 +1,10 @@
 import { db } from "@/lib/db";
 import { DepartmentFormData, PositionFormData } from "../schemas";
 
-export async function getDepartments() {
+export async function getDepartments(limit = 100) {
   return db.department.findMany({
     where: { deletedAt: null },
+    take: limit,
     include: {
       _count: {
         select: {
@@ -104,12 +105,13 @@ export async function deleteDepartment(id: string) {
   });
 }
 
-export async function getPositions(departmentId?: string) {
+export async function getPositions(departmentId?: string, limit = 100) {
   return db.position.findMany({
     where: {
       deletedAt: null,
       ...(departmentId ? { departmentId } : {}),
     },
+    take: limit,
     include: {
       department: true,
       _count: {

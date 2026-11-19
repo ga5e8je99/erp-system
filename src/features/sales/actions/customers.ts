@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { requirePermission } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
 import { Prisma } from "@prisma/client";
+import { toSafeError } from "@/lib/safe-error";
 import {
   createCustomerSchema,
   updateCustomerSchema,
@@ -73,10 +74,9 @@ export async function createCustomerAction(
 
     return { ok: true, data: { id: customer.id, name: customer.name, code: customer.code } };
   } catch (error) {
-    console.error("createCustomerAction error:", error);
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "INTERNAL_ERROR",
+      error: toSafeError(error, "INTERNAL_ERROR"),
     };
   }
 }
@@ -144,7 +144,7 @@ export async function updateCustomerAction(
   } catch (error) {
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "INTERNAL_ERROR",
+      error: toSafeError(error, "INTERNAL_ERROR"),
     };
   }
 }
@@ -201,7 +201,7 @@ export async function deleteCustomerAction(
   } catch (error) {
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "INTERNAL_ERROR",
+      error: toSafeError(error, "INTERNAL_ERROR"),
     };
   }
 }

@@ -79,8 +79,7 @@ export function GoodsReceiptDialog({
             setWarehouseId(def.id);
           }
         }
-      } catch (err) {
-        console.error("Failed to load warehouses:", err);
+      } catch {
       }
     }
     if (open) {
@@ -127,8 +126,7 @@ export function GoodsReceiptDialog({
         label: s.label,
         raw: s,
       }));
-    } catch (err) {
-      console.error(err);
+    } catch {
       return [];
     }
   }, []);

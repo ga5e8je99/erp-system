@@ -77,8 +77,7 @@ export function PurchaseReturnDialog({
             setWarehouseId(def.id);
           }
         }
-      } catch (err) {
-        console.error("Failed to load warehouses:", err);
+      } catch {
       }
     }
     if (open) {
@@ -108,8 +107,7 @@ export function PurchaseReturnDialog({
         value: s.value,
         label: s.label,
       }));
-    } catch (err) {
-      console.error(err);
+    } catch {
       return [];
     }
   }, []);
@@ -126,8 +124,7 @@ export function PurchaseReturnDialog({
         label: p.label,
         raw: p,
       }));
-    } catch (err) {
-      console.error(err);
+    } catch {
       return [];
     }
   }, []);

@@ -154,6 +154,8 @@ model User {
 
   @@index([email])
   @@index([roleId])
+  @@index([deletedAt])
+  @@index([isActive, deletedAt])
 }
 
 model Role {
@@ -213,6 +215,17 @@ model AuditLog {
   @@index([entity, entityId])
   @@index([createdAt])
   @@index([entity, createdAt])
+}
+
+model RateLimit {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  count       Int      @default(0)
+  windowStart DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([key])
+  @@index([windowStart])
 }
 
 model CompanySettings {
@@ -309,6 +322,7 @@ model Category {
   products    Product[]
 
   @@index([parentId])
+  @@index([deletedAt])
 }
 
 model Unit {
@@ -356,8 +370,10 @@ model Product {
   @@index([barcode])
   @@index([name])
   @@index([categoryId])
+  @@index([unitId])
   @@index([deletedAt])
   @@index([categoryId, deletedAt])
+  @@index([trackStock, deletedAt])
 }
 
 model Warehouse {
@@ -376,6 +392,7 @@ model Warehouse {
   purchaseReturns PurchaseReturn[]
 
   @@index([code])
+  @@index([deletedAt])
 }
 
 model StockLevel {
@@ -417,6 +434,7 @@ model StockMovement {
   @@index([referenceType, referenceId])
   @@index([productId, warehouseId])
   @@index([warehouseId, createdAt])
+  @@index([createdById])
 }
 
 // ------------------------------------------------------
@@ -468,7 +486,9 @@ model SalesQuotation {
 
   @@index([quotationNumber])
   @@index([customerId])
+  @@index([status])
   @@index([issueDate])
+  @@index([status, issueDate])
 }
 
 model SalesQuotationItem {
@@ -609,6 +629,7 @@ model CustomerPayment {
   @@index([customerId])
   @@index([invoiceId])
   @@index([date])
+  @@index([customerId, date])
 }
 
 model SalesReturn {
@@ -631,6 +652,8 @@ model SalesReturn {
   @@index([returnNumber])
   @@index([customerId])
   @@index([invoiceId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model SalesReturnItem {
@@ -840,6 +863,7 @@ model SupplierPayment {
   @@index([supplierId])
   @@index([invoiceId])
   @@index([date])
+  @@index([supplierId, date])
 }
 
 model PurchaseReturn {
@@ -865,6 +889,8 @@ model PurchaseReturn {
   @@index([supplierId])
   @@index([invoiceId])
   @@index([warehouseId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model PurchaseReturnItem {
@@ -962,6 +988,7 @@ model JournalLine {
 
   @@index([entryId])
   @@index([accountId])
+  @@index([accountId, entryId])
 }
 
 model FiscalPeriod {
@@ -996,6 +1023,8 @@ model Expense {
   @@index([accountId])
   @@index([paidFromAccountId])
   @@index([date])
+  @@index([deletedAt])
+  @@index([date, deletedAt])
 }
 
 // ------------------------------------------------------
@@ -1015,6 +1044,7 @@ model Department {
   positions   Position[]
 
   @@index([code])
+  @@index([deletedAt])
 }
 
 model Position {
@@ -1031,6 +1061,7 @@ model Position {
 
   @@index([code])
   @@index([departmentId])
+  @@index([deletedAt])
 }
 
 model Employee {
@@ -1066,6 +1097,7 @@ model Employee {
   @@index([status])
   @@index([deletedAt])
   @@index([departmentId, status])
+  @@index([userId])
 }
 
 model Attendance {
@@ -1084,6 +1116,7 @@ model Attendance {
   @@unique([employeeId, date])
   @@index([employeeId])
   @@index([date])
+  @@index([employeeId, date])
 }
 
 model LeaveType {
@@ -1116,6 +1149,8 @@ model LeaveRequest {
   @@index([employeeId])
   @@index([leaveTypeId])
   @@index([status])
+  @@index([startDate, endDate])
+  @@index([status, createdAt])
 }
 
 model PayrollRun {
@@ -1142,6 +1177,7 @@ model PayrollRun {
 
   @@unique([month, year])
   @@index([year, month])
+  @@index([status])
 }
 
 model Payslip {

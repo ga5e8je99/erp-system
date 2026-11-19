@@ -6,6 +6,7 @@ import { requirePermission } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
 import { expenseSchema } from "../schemas";
 import { serializeDecimals } from "@/lib/serialization";
+import { toSafeError } from "@/lib/safe-error";
 import {
   recordExpense,
   deleteExpense,
@@ -47,8 +48,7 @@ export async function recordExpenseAction(input: unknown) {
     revalidatePath("/accounting/accounts");
     return { ok: true, data: serializeDecimals(expense) };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "فشل تسجيل المصروف";
-    return { ok: false, error: message };
+    return { ok: false, error: toSafeError(error, "فشل تسجيل المصروف") };
   }
 }
 
@@ -78,7 +78,6 @@ export async function deleteExpenseAction(id: string) {
     revalidatePath("/accounting/accounts");
     return { ok: true, data: serializeDecimals(deleted) };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "فشل حذف وإلغاء المصروف";
-    return { ok: false, error: message };
+    return { ok: false, error: toSafeError(error, "فشل حذف وإلغاء المصروف") };
   }
 }

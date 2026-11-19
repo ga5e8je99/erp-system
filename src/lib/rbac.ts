@@ -11,6 +11,22 @@ export class ForbiddenError extends Error {
   }
 }
 
+export const RESERVED_ROLE_NAMES = [
+  "admin",
+  "super admin",
+  "superuser",
+  "administrator",
+  "root",
+];
+
+/**
+ * Checks whether a given role name is reserved for system administrative use.
+ */
+export function isReservedRoleName(name: string): boolean {
+  const normalized = name.trim().toLowerCase().replace(/[-_]/g, " ");
+  return RESERVED_ROLE_NAMES.some((reserved) => normalized === reserved);
+}
+
 export type PermissionKey =
   | "auth.user.manage"
   | "auth.role.manage"
@@ -79,7 +95,8 @@ function isSessionLike(obj: SessionLike | UserLike): obj is SessionLike {
 
 /**
  * Checks whether a user or session has a specific permission key.
- * Admin role or "*" permission bypasses all checks.
+ * Only the wildcard "*" permission bypasses specific checks.
+ * Role name alone (e.g. "admin") NEVER grants permissions.
  */
 export function hasPermission(
   target: SessionLike | UserLike | null | undefined,
@@ -93,11 +110,8 @@ export function hasPermission(
 
   if (!user) return false;
 
-  // Superuser / Admin role bypass
-  if (user.role?.toLowerCase() === "admin") return true;
-
   if (!user.permissions || !Array.isArray(user.permissions)) return false;
-  if (user.permissions.includes("*") || user.permissions.includes("admin")) return true;
+  if (user.permissions.includes("*")) return true;
 
   return user.permissions.includes(permission);
 }

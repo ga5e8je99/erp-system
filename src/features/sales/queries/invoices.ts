@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { Prisma, SalesInvoiceStatus } from "@prisma/client";
 import { serializeDecimals } from "@/lib/serialization";
+import { clampPagination } from "@/lib/pagination";
 
 export interface GetInvoicesParams {
   page?: number;
@@ -13,18 +14,14 @@ export interface GetInvoicesParams {
 }
 
 export async function getInvoices(params: GetInvoicesParams = {}) {
+  const { page, pageSize, skip, take } = clampPagination(params, 20);
   const {
-    page = 1,
-    pageSize = 20,
     search,
     customerId,
     status = "all",
     fromDate,
     toDate,
   } = params;
-
-  const skip = (Math.max(1, page) - 1) * pageSize;
-  const take = Math.max(1, pageSize);
 
   const where: Prisma.SalesInvoiceWhereInput = {};
 

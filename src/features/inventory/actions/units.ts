@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requirePermission } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
+import { toSafeError } from "@/lib/safe-error";
 import {
   unitSchema,
   updateUnitSchema,
@@ -62,7 +63,7 @@ export async function createUnitAction(
   } catch (error) {
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "INTERNAL_ERROR",
+      error: toSafeError(error, "INTERNAL_ERROR"),
     };
   }
 }
@@ -113,7 +114,7 @@ export async function updateUnitAction(
   } catch (error) {
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "INTERNAL_ERROR",
+      error: toSafeError(error, "INTERNAL_ERROR"),
     };
   }
 }
@@ -161,7 +162,7 @@ export async function deleteUnitAction(
   } catch (error) {
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "INTERNAL_ERROR",
+      error: toSafeError(error, "INTERNAL_ERROR"),
     };
   }
 }

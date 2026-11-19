@@ -6,6 +6,7 @@ import { requirePermission } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
 import { accountSchema } from "../schemas";
 import { serializeDecimals } from "@/lib/serialization";
+import { toSafeError } from "@/lib/safe-error";
 import {
   createAccount,
   updateAccount,
@@ -46,8 +47,7 @@ export async function createAccountAction(input: unknown) {
     revalidatePath("/accounting/accounts");
     return { ok: true, data: serializeDecimals(account) };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "فشل إنشاء الحساب";
-    return { ok: false, error: message };
+    return { ok: false, error: toSafeError(error, "فشل إنشاء الحساب") };
   }
 }
 
@@ -85,8 +85,7 @@ export async function updateAccountAction(id: string, input: unknown) {
     revalidatePath("/accounting/accounts");
     return { ok: true, data: serializeDecimals(updated) };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "فشل تعديل الحساب";
-    return { ok: false, error: message };
+    return { ok: false, error: toSafeError(error, "فشل تعديل الحساب") };
   }
 }
 
@@ -114,7 +113,6 @@ export async function deleteAccountAction(id: string) {
     revalidatePath("/accounting/accounts");
     return { ok: true, data: deleted };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "فشل حذف الحساب";
-    return { ok: false, error: message };
+    return { ok: false, error: toSafeError(error, "فشل حذف الحساب") };
   }
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Cairo, Inter } from "next/font/google";
 import { notFound } from "next/navigation";
+import { headers } from "next/headers";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
 import { Toaster } from "sonner";
@@ -49,6 +50,8 @@ export default async function LocaleLayout({
 
   setRequestLocale(locale);
   const messages = await getMessages();
+  const headerList = await headers();
+  const nonce = headerList.get("x-nonce") ?? undefined;
   const isArabic = locale === "ar";
   const dir = isArabic ? "rtl" : "ltr";
   const activeFont = isArabic ? cairo : inter;
@@ -68,6 +71,7 @@ export default async function LocaleLayout({
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange
+          nonce={nonce}
         >
           <AuthSessionProvider>
             <NextIntlClientProvider messages={messages}>

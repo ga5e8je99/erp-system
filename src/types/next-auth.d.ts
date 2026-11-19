@@ -28,5 +28,6 @@ declare module "next-auth/jwt" {
     role: string;
     permissions: string[];
     locale: string;
+    refreshedAt?: number;
   }
 }

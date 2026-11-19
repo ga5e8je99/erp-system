@@ -1,8 +1,11 @@
 "use server";
 
+import { logger } from "@/lib/logger";
+
 import { revalidatePath } from "next/cache";
 import { requirePermission } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
+import { toSafeError } from "@/lib/safe-error";
 import {
   salesReturnSchema,
   type SalesReturnInput,
@@ -67,10 +70,10 @@ export async function createSalesReturnAction(
       },
     };
   } catch (error) {
-    console.error("createSalesReturnAction error:", error);
+    logger.error({ err: error }, "createSalesReturnAction error:");
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "INTERNAL_ERROR",
+      error: toSafeError(error, "INTERNAL_ERROR"),
     };
   }
 }

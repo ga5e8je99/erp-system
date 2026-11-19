@@ -106,8 +106,7 @@ export function PurchaseOrderFormDialog({
         label: s.label,
         description: s.phone ? `هاتف: ${s.phone}` : undefined,
       }));
-    } catch (err) {
-      console.error(err);
+    } catch {
       return [];
     }
   }, []);

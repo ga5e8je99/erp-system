@@ -54,11 +54,22 @@ export async function getAllowNegativeStock(client: DbClient): Promise<boolean> 
 
 /**
  * Core transactional stock movement engine.
- * Updates or creates StockLevel atomically with a StockMovement record.
+ * Updates or creates StockLevel atomically with row-level locking (SELECT ... FOR UPDATE)
+ * and a StockMovement record.
  * Throws an error if negative stock is disallowed and stock drops below 0.
  */
 export async function recordStockMovement(
   client: DbClient,
+  params: SingleMovementParams
+) {
+  if ("$transaction" in client && typeof client.$transaction === "function") {
+    return client.$transaction(async (tx) => recordStockMovementCore(tx, params));
+  }
+  return recordStockMovementCore(client as Prisma.TransactionClient, params);
+}
+
+async function recordStockMovementCore(
+  client: Prisma.TransactionClient,
   params: SingleMovementParams
 ) {
   const {
@@ -90,17 +101,30 @@ export async function recordStockMovement(
   // If the product doesn't track stock, we still log the movement but don't enforce limits
   const tracksStock = product.trackStock;
 
-  // Retrieve current stock level
-  const currentStockLevel = await client.stockLevel.findUnique({
+  // Guarantee the row exists so SELECT ... FOR UPDATE has a row to lock
+  await client.stockLevel.upsert({
     where: {
       productId_warehouseId: {
         productId,
         warehouseId,
       },
     },
+    update: {},
+    create: {
+      productId,
+      warehouseId,
+      quantity: new Prisma.Decimal(0),
+    },
   });
 
-  const currentQty = currentStockLevel ? Number(currentStockLevel.quantity) : 0;
+  // Acquire exclusive row-level lock via SELECT ... FOR UPDATE to prevent concurrent race conditions
+  const lockedRows = await client.$queryRaw<Array<{ quantity: Prisma.Decimal | number }>>`
+    SELECT "quantity" FROM "StockLevel"
+    WHERE "productId" = ${productId} AND "warehouseId" = ${warehouseId}
+    FOR UPDATE
+  `;
+
+  const currentQty = lockedRows.length > 0 ? Number(lockedRows[0].quantity) : 0;
   let newQty = currentQty;
 
   // Determine delta based on movement type and referenceType
@@ -126,7 +150,7 @@ export async function recordStockMovement(
     }
   }
 
-  // Enforce negative stock validation
+  // Enforce negative stock validation under row lock
   if (isReduction && tracksStock && newQty < 0) {
     const allowNegative = await getAllowNegativeStock(client);
     if (!allowNegative) {
@@ -136,20 +160,15 @@ export async function recordStockMovement(
     }
   }
 
-  // Update or insert StockLevel
-  const updatedStockLevel = await client.stockLevel.upsert({
+  // Update StockLevel atomically
+  const updatedStockLevel = await client.stockLevel.update({
     where: {
       productId_warehouseId: {
         productId,
         warehouseId,
       },
     },
-    update: {
-      quantity: new Prisma.Decimal(newQty),
-    },
-    create: {
-      productId,
-      warehouseId,
+    data: {
       quantity: new Prisma.Decimal(newQty),
     },
   });

@@ -47,6 +47,7 @@ export async function getDailyAttendance(date: Date) {
       deletedAt: null,
       status: EmployeeStatus.ACTIVE,
     },
+    take: 200,
     include: {
       department: true,
       position: true,
@@ -58,6 +59,7 @@ export async function getDailyAttendance(date: Date) {
     where: {
       date: normDate,
     },
+    take: 200,
   });
 
   const attendanceMap = new Map(attendances.map((a) => [a.employeeId, a]));
@@ -128,6 +130,7 @@ export async function getEmployeeMonthlyAttendance(employeeId: string, month: nu
         lte: endDate,
       },
     },
+    take: 100,
     orderBy: { date: "asc" },
   });
 }

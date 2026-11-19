@@ -24,6 +24,7 @@ import {
   createQuotationAction,
   updateQuotationAction,
 } from "../actions/quotations";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 
 interface QuotationFormDialogProps {
   open: boolean;
@@ -56,8 +57,10 @@ export function QuotationFormDialog({
   onSuccess,
 }: QuotationFormDialogProps) {
   const t = useTranslations("sales.quotations");
+  const tConfirm = useTranslations("confirm");
   const isEditing = Boolean(quotation?.id);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [showDiscardConfirm, setShowDiscardConfirm] = React.useState(false);
 
   const [customerId, setCustomerId] = React.useState(quotation?.customerId || "");
   const [customerOption, setCustomerOption] = React.useState<ComboboxOption | undefined>(
@@ -132,8 +135,7 @@ export function QuotationFormDialog({
           value: c.id,
           label: `${c.name} (${c.code})`,
         }));
-      } catch (err) {
-        console.error(err);
+      } catch {
         return [];
       }
     },
@@ -199,16 +201,43 @@ export function QuotationFormDialog({
           toast.error(res.error || "فشل إنشاء عرض السعر");
         }
       }
-    } catch (err) {
-      console.error(err);
+    } catch {
       toast.error("حدث خطأ غير متوقع");
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const isFormDirty = React.useMemo(() => {
+    if (isEditing) {
+      return (
+        customerId !== (quotation?.customerId || "") ||
+        notes !== (quotation?.notes || "")
+      );
+    }
+    return Boolean(customerId || items.length > 0 || notes.trim());
+  }, [isEditing, customerId, notes, items.length, quotation]);
+
+  const handleRequestClose = (nextOpen: boolean) => {
+    if (!nextOpen) {
+      if (isFormDirty) {
+        setShowDiscardConfirm(true);
+        return;
+      }
+      onOpenChange(false);
+    } else {
+      onOpenChange(true);
+    }
+  };
+
+  const handleConfirmDiscard = () => {
+    setShowDiscardConfirm(false);
+    onOpenChange(false);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <>
+      <Dialog open={open} onOpenChange={handleRequestClose}>
       <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{isEditing ? t("editQuotation") : t("addQuotation")}</DialogTitle>
@@ -277,7 +306,7 @@ export function QuotationFormDialog({
             <Button
               type="button"
               variant="outline"
-              onClick={() => onOpenChange(false)}
+              onClick={() => handleRequestClose(false)}
               disabled={isSubmitting}
             >
               إلغاء
@@ -293,5 +322,17 @@ export function QuotationFormDialog({
         </form>
       </DialogContent>
     </Dialog>
+
+    <ConfirmDialog
+      open={showDiscardConfirm}
+      onOpenChange={setShowDiscardConfirm}
+      title={tConfirm("unsavedChangesTitle")}
+      description={tConfirm("unsavedChangesMessage")}
+      confirmText={tConfirm("discard")}
+      cancelText={tConfirm("continueEditing")}
+      variant="destructive"
+      onConfirm={handleConfirmDiscard}
+    />
+  </>
   );
 }

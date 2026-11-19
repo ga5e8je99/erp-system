@@ -1,10 +1,13 @@
 "use server";
 
+import { logger } from "@/lib/logger";
+
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requirePermission } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
 import { Prisma, SalesOrderStatus, SalesInvoiceStatus } from "@prisma/client";
+import { toSafeError } from "@/lib/safe-error";
 import {
   salesOrderSchema,
   type SalesOrderInput,
@@ -107,10 +110,10 @@ export async function createOrderAction(
       data: { id: result.id, orderNumber: result.orderNumber },
     };
   } catch (error) {
-    console.error("createOrderAction error:", error);
+    logger.error({ err: error }, "createOrderAction error:");
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "INTERNAL_ERROR",
+      error: toSafeError(error, "INTERNAL_ERROR"),
     };
   }
 }
@@ -208,10 +211,10 @@ export async function updateOrderAction(
       data: { id: result.id, orderNumber: result.orderNumber },
     };
   } catch (error) {
-    console.error("updateOrderAction error:", error);
+    logger.error({ err: error }, "updateOrderAction error:");
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "INTERNAL_ERROR",
+      error: toSafeError(error, "INTERNAL_ERROR"),
     };
   }
 }
@@ -248,10 +251,10 @@ export async function confirmOrderAction(
 
     return { ok: true, data: { id, status: updated.status } };
   } catch (error) {
-    console.error("confirmOrderAction error:", error);
+    logger.error({ err: error }, "confirmOrderAction error:");
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "INTERNAL_ERROR",
+      error: toSafeError(error, "INTERNAL_ERROR"),
     };
   }
 }
@@ -306,10 +309,10 @@ export async function cancelOrderAction(
 
     return { ok: true, data: { id, status: updated.status } };
   } catch (error) {
-    console.error("cancelOrderAction error:", error);
+    logger.error({ err: error }, "cancelOrderAction error:");
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "INTERNAL_ERROR",
+      error: toSafeError(error, "INTERNAL_ERROR"),
     };
   }
 }
@@ -409,10 +412,10 @@ export async function convertOrderToInvoiceAction(params: {
       data: { invoiceId: invoice.id, invoiceNumber: invoice.invoiceNumber },
     };
   } catch (error) {
-    console.error("convertOrderToInvoiceAction error:", error);
+    logger.error({ err: error }, "convertOrderToInvoiceAction error:");
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "INTERNAL_ERROR",
+      error: toSafeError(error, "INTERNAL_ERROR"),
     };
   }
 }
@@ -461,10 +464,10 @@ export async function deleteOrderAction(
 
     return { ok: true, data: { id } };
   } catch (error) {
-    console.error("deleteOrderAction error:", error);
+    logger.error({ err: error }, "deleteOrderAction error:");
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "INTERNAL_ERROR",
+      error: toSafeError(error, "INTERNAL_ERROR"),
     };
   }
 }

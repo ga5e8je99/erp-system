@@ -5,6 +5,7 @@ import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from "recha
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { CategorySalesItem } from "../types";
 import { useLocale } from "next-intl";
+import { formatNumber } from "@/lib/formatters";
 
 interface SalesCategoryChartProps {
   data: CategorySalesItem[];
@@ -21,8 +22,8 @@ export function SalesCategoryChart({ data }: SalesCategoryChartProps) {
     setMounted(true);
   }, []);
 
-  const formatNumber = (num: number) => {
-    return num.toLocaleString("en-US");
+  const formatVal = (num: number) => {
+    return formatNumber(num, { locale: isArabic ? "ar-EG" : "en-US", decimals: 0 });
   };
 
   return (
@@ -58,30 +59,28 @@ export function SalesCategoryChart({ data }: SalesCategoryChartProps) {
                   outerRadius={80}
                   paddingAngle={3}
                 >
-                  {data.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={COLORS[index % COLORS.length]}
-                    />
+                  {data.map((_, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(val: unknown, name: unknown, item: { payload?: { percentage?: number } }) => [
-                    `${formatNumber(Number(val))} (${item.payload?.percentage ?? 0}%)`,
-                    String(name),
-                  ]}
+                  wrapperStyle={{ direction: isArabic ? "rtl" : "ltr" }}
+                  formatter={(val: unknown) => [formatVal(Number(val)), ""]}
+                  labelStyle={{ fontWeight: "bold", fontSize: 12, color: "hsl(var(--popover-foreground))" }}
                   contentStyle={{
-                    backgroundColor: "var(--background)",
-                    borderColor: "var(--border)",
+                    backgroundColor: "hsl(var(--popover))",
+                    borderColor: "hsl(var(--border))",
+                    color: "hsl(var(--popover-foreground))",
                     borderRadius: "8px",
                     fontSize: 12,
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
                   }}
                 />
                 <Legend
                   verticalAlign="bottom"
                   align="center"
                   iconType="circle"
-                  wrapperStyle={{ fontSize: 11, paddingTop: 6 }}
+                  wrapperStyle={{ fontSize: 11, paddingTop: 10 }}
                 />
               </PieChart>
             </ResponsiveContainer>

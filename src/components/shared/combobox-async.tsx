@@ -30,6 +30,7 @@ export interface ComboboxOption<T = any> {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface ComboboxAsyncProps<T = any> {
+  id?: string;
   value?: string;
   onChange?: (value: string, option?: ComboboxOption<T>) => void;
   loadOptions: (query: string) => Promise<ComboboxOption<T>[]>;
@@ -39,10 +40,12 @@ export interface ComboboxAsyncProps<T = any> {
   className?: string;
   clearable?: boolean;
   initialOption?: ComboboxOption<T>;
+  "aria-label"?: string;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function ComboboxAsync<T = any>({
+  id,
   value,
   onChange,
   loadOptions,
@@ -52,6 +55,7 @@ export function ComboboxAsync<T = any>({
   className,
   clearable = true,
   initialOption,
+  "aria-label": ariaLabelProp,
 }: ComboboxAsyncProps<T>) {
   const [open, setOpen] = React.useState(false);
   const [query, setQuery] = React.useState("");
@@ -67,6 +71,7 @@ export function ComboboxAsync<T = any>({
 
   const displayPlaceholder = placeholder || t("selectPlaceholder");
   const displaySearchPlaceholder = searchPlaceholder || t("searchAsync");
+  const accessibleLabel = ariaLabelProp || (selectedOption ? selectedOption.label : displayPlaceholder) || "Select option";
 
   // Fetch initial/search options with debounce
   React.useEffect(() => {
@@ -78,8 +83,8 @@ export function ComboboxAsync<T = any>({
         if (active) {
           setOptions(results);
         }
-      } catch (err) {
-        console.error("Failed to load options:", err);
+      } catch {
+        // Option loading failed silently for combobox query
       } finally {
         if (active) setLoading(false);
       }
@@ -107,11 +112,14 @@ export function ComboboxAsync<T = any>({
     <div className={cn("relative flex items-center", className)}>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger
+          aria-label={accessibleLabel}
           render={
             <Button
+              id={id}
               type="button"
               variant="outline"
               role="combobox"
+              aria-label={accessibleLabel}
               aria-expanded={open}
               disabled={disabled}
               className={cn(

@@ -64,8 +64,9 @@ export function calculateEmployeePayroll(params: CalculateEmployeePayrollParams)
   };
 }
 
-export async function getPayrollRuns() {
+export async function getPayrollRuns(limit = 50) {
   const runs = await db.payrollRun.findMany({
+    take: limit,
     include: {
       _count: {
         select: { payslips: true },
@@ -138,12 +139,13 @@ export async function generatePayrollRun(month: number, year: number) {
   const absenceRate = settings?.absenceDeductionRate ? Number(settings.absenceDeductionRate) : 1.0;
   const lateRate = settings?.lateDeductionRate ? Number(settings.lateDeductionRate) : 0.25;
 
-  // 3. Fetch active employees
+  // 3. Fetch active employees (bounded)
   const employees = await db.employee.findMany({
     where: {
       deletedAt: null,
       status: EmployeeStatus.ACTIVE,
     },
+    take: 500,
     include: {
       department: true,
       position: true,
@@ -166,6 +168,7 @@ export async function generatePayrollRun(month: number, year: number) {
         lte: endDate,
       },
     },
+    take: 5000,
   });
 
   // Group attendances by employeeId

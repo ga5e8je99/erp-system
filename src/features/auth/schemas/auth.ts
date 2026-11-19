@@ -42,3 +42,19 @@ export const updateRolePermissionsSchema = z.object({
 });
 
 export type UpdateRolePermissionsInput = z.infer<typeof updateRolePermissionsSchema>;
+
+export const createRoleSchema = z.object({
+  name: z.string().min(2, "اسم الدور يجب أن يكون حرفين على الأقل"),
+  description: z.string().optional(),
+  permissionIds: z.array(z.string()).optional(),
+});
+
+export type CreateRoleInput = z.infer<typeof createRoleSchema>;
+
+export const updateRoleSchema = z.object({
+  id: z.string(),
+  name: z.string().min(2, "اسم الدور يجب أن يكون حرفين على الأقل"),
+  description: z.string().optional(),
+});
+
+export type UpdateRoleInput = z.infer<typeof updateRoleSchema>;

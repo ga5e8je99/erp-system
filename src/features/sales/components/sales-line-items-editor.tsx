@@ -67,8 +67,7 @@ export function SalesLineItemsEditor({
           description: `${p.salePrice.toLocaleString()} ر.س | مخزون: ${p.stockQuantity} ${p.unitSymbol}`,
           raw: p,
         }));
-      } catch (err) {
-        console.error("Error loading products:", err);
+      } catch {
         return [];
       }
     },
@@ -210,6 +209,7 @@ export function SalesLineItemsEditor({
                       ) : (
                         <div className="space-y-1">
                           <ComboboxAsync
+                            aria-label={t("selectProduct")}
                             value={item.productId}
                             onChange={(val, opt) => handleProductSelect(item.id, val, opt)}
                             loadOptions={loadProductOptions}
@@ -354,6 +354,7 @@ export function SalesLineItemsEditor({
                           variant="ghost"
                           size="icon"
                           onClick={() => handleRemoveItem(item.id)}
+                          aria-label={t("removeLine")}
                           className="h-8 w-8 text-destructive hover:bg-destructive/10"
                         >
                           <Trash2 className="h-4 w-4" />

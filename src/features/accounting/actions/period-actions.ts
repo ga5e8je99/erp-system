@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { requirePermission } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
 import { fiscalPeriodSchema } from "../schemas";
+import { toSafeError } from "@/lib/safe-error";
 import {
   createFiscalPeriod,
   closeFiscalPeriod,
@@ -45,8 +46,7 @@ export async function createFiscalPeriodAction(input: unknown) {
     revalidatePath("/accounting/periods");
     return { ok: true, data: period };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "فشل إنشاء الفترة المالية";
-    return { ok: false, error: message };
+    return { ok: false, error: toSafeError(error, "فشل إنشاء الفترة المالية") };
   }
 }
 
@@ -74,8 +74,7 @@ export async function closeFiscalPeriodAction(id: string) {
     revalidatePath("/accounting/periods");
     return { ok: true, data: period };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "فشل إقفال الفترة المالية";
-    return { ok: false, error: message };
+    return { ok: false, error: toSafeError(error, "فشل إقفال الفترة المالية") };
   }
 }
 
@@ -103,7 +102,6 @@ export async function reopenFiscalPeriodAction(id: string) {
     revalidatePath("/accounting/periods");
     return { ok: true, data: period };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "فشل إعادة فتح الفترة المالية";
-    return { ok: false, error: message };
+    return { ok: false, error: toSafeError(error, "فشل إعادة فتح الفترة المالية") };
   }
 }

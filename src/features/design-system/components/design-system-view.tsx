@@ -40,7 +40,7 @@ import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorState } from "@/components/shared/error-state";
 import { DataTable } from "@/components/shared/data-table";
-import { LineItemsEditor, type LineItem, type LineItemsTotals } from "@/components/shared/line-items-editor";
+import { LineItemsEditor, type LineItem } from "@/components/shared/line-items-editor";
 import { formatMoney } from "@/lib/money";
 
 interface DemoOrder {
@@ -170,9 +170,8 @@ export function DesignSystemView() {
     },
   ]);
 
-  const handleLineItemsChange = (newItems: LineItem[], totals: LineItemsTotals) => {
+  const handleLineItemsChange = (newItems: LineItem[]) => {
     setLineItems(newItems);
-    console.log("Calculated Totals:", totals);
   };
 
   // DataTable Columns Definition

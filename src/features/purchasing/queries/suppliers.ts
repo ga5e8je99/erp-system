@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 import { getSupplierStatementOfAccount } from "../services/purchasing-service";
 import { serializeDecimals } from "@/lib/serialization";
+import { clampPagination } from "@/lib/pagination";
 
 export interface GetSuppliersParams {
   page?: number;
@@ -12,16 +13,12 @@ export interface GetSuppliersParams {
 }
 
 export async function getSuppliers(params: GetSuppliersParams = {}) {
+  const { page, pageSize, skip, take } = clampPagination(params, 20);
   const {
-    page = 1,
-    pageSize = 20,
     search,
     sortBy = "createdAt",
     sortOrder = "desc",
   } = params;
-
-  const skip = (Math.max(1, page) - 1) * pageSize;
-  const take = Math.max(1, pageSize);
 
   const where: Prisma.SupplierWhereInput = {
     deletedAt: null,

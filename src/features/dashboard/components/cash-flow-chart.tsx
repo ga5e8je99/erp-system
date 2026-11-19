@@ -14,6 +14,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { CashFlowMonthItem } from "../types";
 import { useLocale } from "next-intl";
+import { formatNumber } from "@/lib/formatters";
 
 interface CashFlowChartProps {
   data: CashFlowMonthItem[];
@@ -28,8 +29,8 @@ export function CashFlowChart({ data }: CashFlowChartProps) {
     setMounted(true);
   }, []);
 
-  const formatNumber = (num: number) => {
-    return num.toLocaleString("en-US");
+  const formatVal = (num: number) => {
+    return formatNumber(num, { locale: isArabic ? "ar-EG" : "en-US", decimals: 0 });
   };
 
   return (
@@ -52,7 +53,15 @@ export function CashFlowChart({ data }: CashFlowChartProps) {
             </div>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={data} margin={{ top: 10, right: 10, left: 10, bottom: 20 }}>
+              <AreaChart
+                data={data}
+                margin={{
+                  top: 10,
+                  right: isArabic ? 20 : 10,
+                  left: isArabic ? 10 : 20,
+                  bottom: 20,
+                }}
+              >
                 <defs>
                   <linearGradient id="colorInflow" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#10B981" stopOpacity={0.4} />
@@ -63,32 +72,39 @@ export function CashFlowChart({ data }: CashFlowChartProps) {
                     <stop offset="95%" stopColor="#F43F5E" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" opacity={0.2} vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} vertical={false} />
                 <XAxis
                   dataKey="monthLabel"
-                  tick={{ fontSize: 11, fill: "currentColor" }}
+                  tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
                   interval={0}
                   angle={-20}
                   textAnchor="end"
                   height={40}
+                  stroke="hsl(var(--border))"
                 />
                 <YAxis
-                  tick={{ fontSize: 11, fill: "currentColor" }}
+                  orientation={isArabic ? "right" : "left"}
+                  tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
                   tickFormatter={(val) => (val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val)}
-                  width={40}
+                  width={45}
+                  stroke="hsl(var(--border))"
                 />
                 <Tooltip
-                  formatter={(val: unknown) => [`${formatNumber(Number(val))}`, ""]}
+                  wrapperStyle={{ direction: isArabic ? "rtl" : "ltr" }}
+                  formatter={(val: unknown) => [formatVal(Number(val)), ""]}
+                  labelStyle={{ fontWeight: "bold", fontSize: 12, color: "hsl(var(--popover-foreground))" }}
                   contentStyle={{
-                    backgroundColor: "var(--background)",
-                    borderColor: "var(--border)",
+                    backgroundColor: "hsl(var(--popover))",
+                    borderColor: "hsl(var(--border))",
+                    color: "hsl(var(--popover-foreground))",
                     borderRadius: "8px",
                     fontSize: 12,
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
                   }}
                 />
                 <Legend
                   verticalAlign="top"
-                  align="right"
+                  align={isArabic ? "left" : "right"}
                   iconType="circle"
                   wrapperStyle={{ fontSize: 12, paddingBottom: 10 }}
                 />

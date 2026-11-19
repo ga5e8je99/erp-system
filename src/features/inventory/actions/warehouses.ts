@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requirePermission } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
+import { toSafeError } from "@/lib/safe-error";
 import {
   warehouseSchema,
   updateWarehouseSchema,
@@ -72,7 +73,7 @@ export async function createWarehouseAction(
   } catch (error) {
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "INTERNAL_ERROR",
+      error: toSafeError(error, "INTERNAL_ERROR"),
     };
   }
 }
@@ -145,7 +146,7 @@ export async function updateWarehouseAction(
   } catch (error) {
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "INTERNAL_ERROR",
+      error: toSafeError(error, "INTERNAL_ERROR"),
     };
   }
 }
@@ -206,7 +207,7 @@ export async function deleteWarehouseAction(
   } catch (error) {
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "INTERNAL_ERROR",
+      error: toSafeError(error, "INTERNAL_ERROR"),
     };
   }
 }

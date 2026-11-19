@@ -1,20 +1,20 @@
 "use client"
 
 import * as React from "react"
-import { cn } from "cn"
+import { cn } from "@/lib/utils"
 
 function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (
     <div
       data-slot="table-container"
-      className="relative w-full overflow-x-auto"
+      className="relative w-full overflow-x-auto scrollbar-thin"
     >
       <table
         data-slot="table"
         className={cn(
           "w-full caption-bottom text-sm",
-          "[&_th:first-child]:sticky [&_th:first-child]:start-0 [&_th:first-child]:z-10",
-          "[&_td:first-child]:sticky [&_td:first-child]:start-0 [&_td:first-child]:z-10",
+          "[&_th:first-child]:sticky [&_th:first-child]:start-0 [&_th:first-child]:z-10 [&_th:first-child]:bg-card/95 [&_th:first-child]:backdrop-blur-xs",
+          "[&_td:first-child]:sticky [&_td:first-child]:start-0 [&_td:first-child]:z-10 [&_td:first-child]:bg-card [tr:hover_&]:bg-muted/50",
           className
         )}
         {...props}

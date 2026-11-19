@@ -680,6 +680,7 @@ export async function getSupplierStatementOfAccount(
             }
           : {}),
       },
+      take: 500,
       select: {
         id: true,
         invoiceNumber: true,
@@ -700,6 +701,7 @@ export async function getSupplierStatementOfAccount(
             }
           : {}),
       },
+      take: 500,
       select: {
         id: true,
         paymentNumber: true,
@@ -722,6 +724,7 @@ export async function getSupplierStatementOfAccount(
             }
           : {}),
       },
+      take: 500,
       select: {
         id: true,
         returnNumber: true,

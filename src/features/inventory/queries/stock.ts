@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { Prisma, StockMovementType } from "@prisma/client";
 import { StockOverviewItem } from "../types";
 import { serializeDecimals } from "@/lib/serialization";
+import { clampPagination } from "@/lib/pagination";
 
 export interface GetStockOverviewParams {
   page?: number;
@@ -12,16 +13,12 @@ export interface GetStockOverviewParams {
 }
 
 export async function getStockOverview(params: GetStockOverviewParams = {}) {
+  const { page, pageSize, skip, take } = clampPagination(params, 20);
   const {
-    page = 1,
-    pageSize = 20,
     search,
     warehouseId,
     lowStockOnly = false,
   } = params;
-
-  const skip = (Math.max(1, page) - 1) * pageSize;
-  const take = Math.max(1, pageSize);
 
   const productWhere: Prisma.ProductWhereInput = {
     deletedAt: null,
@@ -37,9 +34,10 @@ export async function getStockOverview(params: GetStockOverviewParams = {}) {
     ];
   }
 
-  // Get active warehouses
+  // Get active warehouses (bounded to 50)
   const warehouses = await db.warehouse.findMany({
     where: { deletedAt: null },
+    take: 50,
     orderBy: [{ isDefault: "desc" }, { name: "asc" }],
     select: { id: true, name: true, code: true },
   });
@@ -134,9 +132,8 @@ export interface GetMovementLedgerParams {
 }
 
 export async function getMovementLedger(params: GetMovementLedgerParams = {}) {
+  const { page, pageSize, skip, take } = clampPagination(params, 20);
   const {
-    page = 1,
-    pageSize = 25,
     search,
     productId,
     warehouseId,
@@ -144,9 +141,6 @@ export async function getMovementLedger(params: GetMovementLedgerParams = {}) {
     fromDate,
     toDate,
   } = params;
-
-  const skip = (Math.max(1, page) - 1) * pageSize;
-  const take = Math.max(1, pageSize);
 
   const where: Prisma.StockMovementWhereInput = {};
 

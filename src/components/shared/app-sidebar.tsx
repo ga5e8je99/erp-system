@@ -349,7 +349,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
 
         {businessNav.some((item) => hasPerm(item.permission)) && (
           <SidebarGroup>
-            <SidebarGroupLabel className="text-[11px] font-semibold tracking-wider text-muted-foreground/80 uppercase">
+            <SidebarGroupLabel className="text-[11px] font-semibold tracking-wider text-sidebar-foreground uppercase">
               {tCommon("inventory")} &amp; {tCommon("sales")}
             </SidebarGroupLabel>
             <SidebarMenu>
@@ -372,7 +372,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
 
         {adminNav.some((item) => hasPerm(item.permission)) && (
           <SidebarGroup>
-            <SidebarGroupLabel className="text-[11px] font-semibold tracking-wider text-muted-foreground/80 uppercase">
+            <SidebarGroupLabel className="text-[11px] font-semibold tracking-wider text-sidebar-foreground uppercase">
               {tCommon("settings")}
             </SidebarGroupLabel>
             <SidebarMenu>

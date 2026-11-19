@@ -21,11 +21,11 @@ export function PendingLeaveWidget({ leaves, locale }: PendingLeaveWidgetProps) 
       <CardHeader className="flex flex-row items-center justify-between pb-3">
         <div>
           <div className="flex items-center gap-2">
-            <CardTitle className="text-sm font-semibold text-sky-600">
+            <CardTitle className="text-sm font-semibold text-sky-800 dark:text-sky-300">
               {isArabic ? "طلبات الإجازات المعلقة" : "Pending Leave Requests"}
             </CardTitle>
             {leaves.length > 0 && (
-              <Badge className="bg-sky-500/15 text-sky-700 dark:text-sky-400 border-0 h-5 px-1.5 text-[10px]">
+              <Badge className="bg-sky-100 text-sky-800 dark:bg-sky-950/50 dark:text-sky-300 border border-sky-200 dark:border-sky-800 h-5 px-1.5 text-[10px]">
                 {leaves.length}
               </Badge>
             )}

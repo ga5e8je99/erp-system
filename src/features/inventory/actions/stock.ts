@@ -1,8 +1,11 @@
 "use server";
 
+import { logger } from "@/lib/logger";
+
 import { revalidatePath } from "next/cache";
 import { requirePermission } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
+import { toSafeError } from "@/lib/safe-error";
 import {
   stockAdjustmentSchema,
   stockTransferSchema,
@@ -57,10 +60,10 @@ export async function createStockAdjustmentAction(
 
     return { ok: true, data: result };
   } catch (error) {
-    console.error("createStockAdjustmentAction error:", error);
+    logger.error({ err: error }, "createStockAdjustmentAction error:");
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "ADJUSTMENT_FAILED",
+      error: toSafeError(error, "ADJUSTMENT_FAILED"),
     };
   }
 }
@@ -107,10 +110,10 @@ export async function createStockTransferAction(
 
     return { ok: true, data: result };
   } catch (error) {
-    console.error("createStockTransferAction error:", error);
+    logger.error({ err: error }, "createStockTransferAction error:");
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "TRANSFER_FAILED",
+      error: toSafeError(error, "TRANSFER_FAILED"),
     };
   }
 }

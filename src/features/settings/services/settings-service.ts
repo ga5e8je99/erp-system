@@ -97,9 +97,10 @@ export async function updateCompanySettings(data: FullCompanySettingsInput) {
   return updated;
 }
 
-export async function getPostableAccounts() {
+export async function getPostableAccounts(limit = 200) {
   return db.account.findMany({
     where: { isPostable: true, deletedAt: null },
+    take: limit,
     orderBy: { code: "asc" },
     select: { id: true, code: true, name: true, type: true },
   });

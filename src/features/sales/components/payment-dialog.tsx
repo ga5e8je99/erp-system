@@ -97,8 +97,7 @@ export function PaymentDialog({
           value: c.id,
           label: `${c.name} (${c.code})`,
         }));
-      } catch (err) {
-        console.error(err);
+      } catch {
         return [];
       }
     },
@@ -137,8 +136,7 @@ export function PaymentDialog({
       } else {
         toast.error(res.error || "فشل تسجيل سند القبض");
       }
-    } catch (err) {
-      console.error(err);
+    } catch {
       toast.error("حدث خطأ غير متوقع");
     } finally {
       setIsSubmitting(false);

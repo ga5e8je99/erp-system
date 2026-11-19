@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { logger } from "@/lib/logger";
 import { Prisma } from "@prisma/client";
 
 export interface LogAuditOptions {
@@ -64,7 +65,7 @@ export async function logAudit(options: LogAuditOptions): Promise<void> {
       },
     });
   } catch (error) {
-    console.error("[AUDIT LOG ERROR]", error);
+    logger.error({ err: error }, "[AUDIT LOG ERROR]");
   }
 }
 

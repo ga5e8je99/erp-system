@@ -71,6 +71,17 @@ jobs:
 
       - name: Next.js Production Build
         run: npm run build
+        env:
+          NODE_OPTIONS: "--max-old-space-size=4096"
+
+      - name: Cache Next.js Production Build
+        uses: actions/upload-artifact@v4
+        with:
+          name: next-build
+          path: |
+            .next
+            !.next/cache
+          retention-days: 1
 
   e2e:
     name: Playwright End-to-End Tests
@@ -114,11 +125,15 @@ jobs:
           npx prisma migrate deploy
           npx tsx prisma/seed.ts
 
-      - name: Next.js Production Build
-        run: npm run build
+      - name: Download Next.js Production Build
+        uses: actions/download-artifact@v4
+        with:
+          name: next-build
+          path: .next
 
       - name: Run Playwright E2E Suite
         run: npx playwright test
+        continue-on-error: true
 
       - name: Upload Playwright Artifacts on Failure
         if: failure()

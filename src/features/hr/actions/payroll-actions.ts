@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { requirePermission } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
 import { generatePayrollSchema, payPayrollSchema } from "../schemas";
+import { serializeDecimals } from "@/lib/serialization";
 import {
   generatePayrollRun,
   approvePayrollRun,
@@ -48,7 +49,7 @@ export async function generatePayrollRunAction(input: unknown) {
     });
 
     revalidatePath("/hr/payroll");
-    return { ok: true, data: run };
+    return { ok: true, data: serializeDecimals(run) };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "فشل إنشاء مسير الرواتب";
     return { ok: false, error: message };
@@ -81,7 +82,7 @@ export async function approvePayrollRunAction(runId: string) {
     revalidatePath(`/hr/payroll/${runId}`);
     revalidatePath("/accounting/journal");
     revalidatePath("/accounting/accounts");
-    return { ok: true, data: run };
+    return { ok: true, data: serializeDecimals(run) };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "فشل اعتماد مسير الرواتب وترحيل القيد";
     return { ok: false, error: message };
@@ -127,7 +128,7 @@ export async function payPayrollRunAction(input: unknown) {
     revalidatePath(`/hr/payroll/${parsed.data.runId}`);
     revalidatePath("/accounting/journal");
     revalidatePath("/accounting/accounts");
-    return { ok: true, data: run };
+    return { ok: true, data: serializeDecimals(run) };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "فشل صرف مسير الرواتب وترحيل القيد";
     return { ok: false, error: message };

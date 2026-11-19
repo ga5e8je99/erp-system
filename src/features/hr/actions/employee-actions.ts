@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { requirePermission } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
 import { employeeSchema } from "../schemas";
+import { serializeDecimals } from "@/lib/serialization";
 import {
   createEmployee,
   updateEmployee,
@@ -45,7 +46,7 @@ export async function createEmployeeAction(input: unknown) {
     });
 
     revalidatePath("/hr/employees");
-    return { ok: true, data: employee };
+    return { ok: true, data: serializeDecimals(employee) };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "فشل إنشاء الموظف";
     return { ok: false, error: message };
@@ -87,7 +88,7 @@ export async function updateEmployeeAction(id: string, input: unknown) {
 
     revalidatePath("/hr/employees");
     revalidatePath(`/hr/employees/${id}`);
-    return { ok: true, data: employee };
+    return { ok: true, data: serializeDecimals(employee) };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "فشل تحديث بيانات الموظف";
     return { ok: false, error: message };
@@ -116,7 +117,7 @@ export async function deleteEmployeeAction(id: string) {
     });
 
     revalidatePath("/hr/employees");
-    return { ok: true, data: employee };
+    return { ok: true, data: serializeDecimals(employee) };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "فشل إنهاء خدمة الموظف";
     return { ok: false, error: message };

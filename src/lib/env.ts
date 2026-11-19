@@ -24,8 +24,14 @@ const envSchema = z.object({
 
   NEXT_PUBLIC_APP_URL: z
     .string()
-    .url("NEXT_PUBLIC_APP_URL must be a valid URL (e.g. http://localhost:3000 or https://erp.example.com)")
-    .default("http://localhost:3000"),
+    .default("http://localhost:3000")
+    .transform((val) => {
+      if (!val) return "http://localhost:3000";
+      if (!val.startsWith("http://") && !val.startsWith("https://")) {
+        return `https://${val}`;
+      }
+      return val;
+    }),
 
   CRON_SECRET: z
     .string()
@@ -67,19 +73,53 @@ function parseEnv(): Env {
     process.env.NODE_ENV === "test" ||
     Boolean(process.env.VITEST);
 
+  const fallbackAppUrl = process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : "http://localhost:3000";
+
+  let rawDatabaseUrl =
+    process.env.DATABASE_URL ||
+    (isBuildOrTest
+      ? "postgresql://postgres:postgres@localhost:5432/masar_erp?schema=public"
+      : undefined);
+
+  // If deployed to Vercel at runtime, localhost is invalid
+  if (
+    !isBuildOrTest &&
+    Boolean(process.env.VERCEL) &&
+    rawDatabaseUrl &&
+    (rawDatabaseUrl.includes("localhost") || rawDatabaseUrl.includes("127.0.0.1"))
+  ) {
+    const errorMsg = `
+========================================================================
+🚨 VERCEL DEPLOYMENT CONFIGURATION ERROR: LOCALHOST DATABASE_URL DETECTED
+========================================================================
+The application is running in Vercel Serverless environment, but DATABASE_URL
+is set to localhost ("${rawDatabaseUrl}").
+
+Vercel functions cannot connect to localhost. You must provide a hosted
+cloud PostgreSQL connection string (such as Neon, Supabase, or AWS RDS).
+
+👉 Fix in Vercel Dashboard:
+   1. Open your project in https://vercel.com
+   2. Go to Settings -> Environment Variables
+   3. Update DATABASE_URL to your hosted cloud PostgreSQL URL
+   4. Trigger a Redeploy
+========================================================================
+`;
+    console.error(errorMsg);
+    throw new Error(errorMsg);
+  }
+
   const rawEnv = {
-    DATABASE_URL:
-      process.env.DATABASE_URL ||
-      (isBuildOrTest
-        ? "postgresql://postgres:postgres@localhost:5432/masar_erp?schema=public"
-        : undefined),
+    DATABASE_URL: rawDatabaseUrl,
     AUTH_SECRET:
       process.env.AUTH_SECRET ||
       (isBuildOrTest
         ? "test-secret-key-at-least-32-chars-long-for-testing"
         : undefined),
-    AUTH_TRUST_HOST: process.env.AUTH_TRUST_HOST,
-    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+    AUTH_TRUST_HOST: process.env.AUTH_TRUST_HOST ?? "true",
+    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || fallbackAppUrl,
     CRON_SECRET: process.env.CRON_SECRET,
     NODE_ENV: process.env.NODE_ENV,
     ADMIN_INITIAL_PASSWORD: process.env.ADMIN_INITIAL_PASSWORD,
@@ -89,6 +129,7 @@ function parseEnv(): Env {
   const parsed = envSchema.safeParse(rawEnv);
 
   if (!parsed.success) {
+    const isVercel = Boolean(process.env.VERCEL);
     const issues = parsed.error.issues.map((i) => `  ❌ ${i.path.join(".")}: ${i.message}`).join("\n");
     const errorMessage = `
 ========================================================================
@@ -100,9 +141,17 @@ variables are missing or malformed:
 ${issues}
 
 👉 Action Required:
-   - For local development: Verify your .env file has all required keys.
-   - For production / Docker: Set environment variables in docker-compose.yml or your cloud hosting panel.
-   - Refer to .env.example for template values.
+${
+  isVercel
+    ? `   - On Vercel: Go to Project Settings -> Environment Variables.
+   - Add DATABASE_URL (connection string from Neon / Supabase / Postgres).
+   - Add AUTH_SECRET (random string at least 32 characters).
+   - Ensure AUTH_TRUST_HOST is set to true.
+   - Trigger a Redeploy under the Deployments tab.`
+    : `   - For local development: Verify your .env file has all required keys.
+   - For production / Docker: Set environment variables in docker-compose.yml or cloud panel.
+   - Refer to .env.example for template values.`
+}
 ========================================================================
 `;
     // Fail fast with clear diagnostic message

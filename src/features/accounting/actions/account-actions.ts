@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { requirePermission } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
 import { accountSchema } from "../schemas";
+import { serializeDecimals } from "@/lib/serialization";
 import {
   createAccount,
   updateAccount,
@@ -43,7 +44,7 @@ export async function createAccountAction(input: unknown) {
     });
 
     revalidatePath("/accounting/accounts");
-    return { ok: true, data: account };
+    return { ok: true, data: serializeDecimals(account) };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "فشل إنشاء الحساب";
     return { ok: false, error: message };
@@ -82,7 +83,7 @@ export async function updateAccountAction(id: string, input: unknown) {
     });
 
     revalidatePath("/accounting/accounts");
-    return { ok: true, data: updated };
+    return { ok: true, data: serializeDecimals(updated) };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "فشل تعديل الحساب";
     return { ok: false, error: message };

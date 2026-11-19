@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { requirePermission } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
 import { journalEntrySchema } from "../schemas";
+import { serializeDecimals } from "@/lib/serialization";
 import {
   createManualJournalEntry,
   postDraftJournalEntry,
@@ -44,7 +45,7 @@ export async function createJournalEntryAction(input: unknown) {
 
     revalidatePath("/accounting/journal");
     revalidatePath("/accounting/accounts");
-    return { ok: true, data: entry };
+    return { ok: true, data: serializeDecimals(entry) };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "فشل تسجيل القيد المحاسبي";
     return { ok: false, error: message };
@@ -75,7 +76,7 @@ export async function postDraftJournalEntryAction(id: string) {
     revalidatePath(`/accounting/journal/${id}`);
     revalidatePath("/accounting/journal");
     revalidatePath("/accounting/accounts");
-    return { ok: true, data: entry };
+    return { ok: true, data: serializeDecimals(entry) };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "فشل ترحيل القيد المحاسبي";
     return { ok: false, error: message };
@@ -107,7 +108,7 @@ export async function reverseJournalEntryAction(id: string, reason?: string) {
     revalidatePath(`/accounting/journal/${id}`);
     revalidatePath("/accounting/journal");
     revalidatePath("/accounting/accounts");
-    return { ok: true, data: result };
+    return { ok: true, data: serializeDecimals(result) };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "فشل عكس القيد المحاسبي";
     return { ok: false, error: message };

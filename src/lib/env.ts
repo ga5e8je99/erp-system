@@ -77,7 +77,7 @@ function parseEnv(): Env {
     ? `https://${process.env.VERCEL_URL}`
     : "http://localhost:3000";
 
-  let rawDatabaseUrl =
+  const rawDatabaseUrl =
     process.env.DATABASE_URL ||
     (isBuildOrTest
       ? "postgresql://postgres:postgres@localhost:5432/masar_erp?schema=public"

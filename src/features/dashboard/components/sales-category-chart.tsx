@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { CategorySalesItem } from "../types";
 import { useLocale } from "next-intl";
 import { formatNumber } from "@/lib/formatters";
+import { PieChart as PieChartIcon } from "lucide-react";
 
 interface SalesCategoryChartProps {
   data: CategorySalesItem[];
@@ -27,7 +28,7 @@ export function SalesCategoryChart({ data }: SalesCategoryChartProps) {
   };
 
   return (
-    <Card className="col-span-full md:col-span-1">
+    <Card className="col-span-full md:col-span-1 flex flex-col justify-between">
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-semibold">
           {isArabic ? "المبيعات حسب التصنيف" : "Sales by Category"}
@@ -36,17 +37,18 @@ export function SalesCategoryChart({ data }: SalesCategoryChartProps) {
           {isArabic ? "توزيع الإيرادات المحققة حسب تصنيفات المنتجات" : "Revenue distribution by product categories"}
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="h-[280px] w-full pt-2">
-          {!mounted ? (
-            <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
-              {isArabic ? "جاري التحميل..." : "Loading..."}
-            </div>
-          ) : data.length === 0 ? (
-            <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
-              {isArabic ? "لا توجد بيانات تصنيفات" : "No category sales data"}
-            </div>
-          ) : (
+      <CardContent className="pt-2 flex-1 flex flex-col justify-center">
+        {!mounted ? (
+          <div className="flex h-[260px] items-center justify-center text-xs text-muted-foreground">
+            {isArabic ? "جاري التحميل..." : "Loading..."}
+          </div>
+        ) : data.length === 0 ? (
+          <div className="flex h-[260px] flex-col items-center justify-center gap-2 text-xs text-muted-foreground">
+            <PieChartIcon className="h-8 w-8 opacity-30" />
+            <span>{isArabic ? "لا توجد بيانات تصنيفات" : "No category sales data"}</span>
+          </div>
+        ) : (
+          <div dir="ltr" className="h-[260px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -56,7 +58,7 @@ export function SalesCategoryChart({ data }: SalesCategoryChartProps) {
                   cx="50%"
                   cy="45%"
                   innerRadius={50}
-                  outerRadius={80}
+                  outerRadius={78}
                   paddingAngle={3}
                 >
                   {data.map((_, index) => (
@@ -65,27 +67,39 @@ export function SalesCategoryChart({ data }: SalesCategoryChartProps) {
                 </Pie>
                 <Tooltip
                   wrapperStyle={{ direction: isArabic ? "rtl" : "ltr" }}
-                  formatter={(val: unknown) => [formatVal(Number(val)), ""]}
-                  labelStyle={{ fontWeight: "bold", fontSize: 12, color: "hsl(var(--popover-foreground))" }}
+                  formatter={(val: unknown) => [
+                    `${formatVal(Number(val))} ${isArabic ? "ج.م" : "EGP"}`,
+                    isArabic ? "الإيراد" : "Revenue",
+                  ]}
+                  labelStyle={{ fontWeight: "bold", fontSize: 12, color: "var(--foreground, #0F172A)" }}
                   contentStyle={{
-                    backgroundColor: "hsl(var(--popover))",
-                    borderColor: "hsl(var(--border))",
-                    color: "hsl(var(--popover-foreground))",
+                    backgroundColor: "var(--card, #FFFFFF)",
+                    borderColor: "var(--border, #E2E8F0)",
+                    color: "var(--card-foreground, #0F172A)",
                     borderRadius: "8px",
                     fontSize: 12,
-                    boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
                   }}
                 />
                 <Legend
                   verticalAlign="bottom"
                   align="center"
                   iconType="circle"
-                  wrapperStyle={{ fontSize: 11, paddingTop: 10 }}
+                  formatter={(value) => {
+                    const item = data.find((d) => d.name === value);
+                    const pct = item ? ` (${item.percentage}%)` : "";
+                    return (
+                      <span className="text-[11px] text-muted-foreground font-medium px-1">
+                        {value}{pct}
+                      </span>
+                    );
+                  }}
+                  wrapperStyle={{ fontSize: 11, paddingTop: 8, direction: isArabic ? "rtl" : "ltr" }}
                 />
               </PieChart>
             </ResponsiveContainer>
-          )}
-        </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

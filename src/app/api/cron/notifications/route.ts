@@ -35,7 +35,10 @@ export async function GET(request: NextRequest) {
     }
 
     const token = authHeader.slice(7).trim();
-    const expectedSecret = env.CRON_SECRET || process.env.CRON_SECRET || "";
+    const expectedSecret =
+      process.env.CRON_SECRET !== undefined
+        ? process.env.CRON_SECRET
+        : env.CRON_SECRET || "";
 
     if (!expectedSecret || !safeCompare(token, expectedSecret)) {
       return NextResponse.json(

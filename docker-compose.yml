@@ -1,0 +1,78 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: masar-app
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-masar_user}:${POSTGRES_PASSWORD:-postgrespassword}@postgres:5432/${POSTGRES_DB:-masar_erp}?schema=public
+      - AUTH_SECRET=${AUTH_SECRET}
+      - AUTH_TRUST_HOST=${AUTH_TRUST_HOST:-true}
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+      - CRON_SECRET=${CRON_SECRET:-masar_cron_secret}
+      - ADMIN_INITIAL_PASSWORD=${ADMIN_INITIAL_PASSWORD:-Admin@12345}
+      - SEED_DEMO_DATA=${SEED_DEMO_DATA:-false}
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - masar_uploads:/app/public/uploads
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: masar-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-masar_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgrespassword}
+      POSTGRES_DB: ${POSTGRES_DB:-masar_erp}
+    volumes:
+      - masar_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-masar_user} -d ${POSTGRES_DB:-masar_erp}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Optional production reverse proxy with automatic Let's Encrypt SSL
+  # Activate with: docker compose --profile proxy up -d
+  caddy:
+    image: caddy:2-alpine
+    container_name: masar-caddy
+    restart: unless-stopped
+    profiles:
+      - proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+      ACME_EMAIL: ${ACME_EMAIL:-admin@example.com}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+      - masar_uploads:/var/www/uploads:ro
+    depends_on:
+      app:
+        condition: service_healthy
+
+volumes:
+  masar_pgdata:
+    driver: local
+  masar_uploads:
+    driver: local
+  caddy_data:
+    driver: local
+  caddy_config:
+    driver: local

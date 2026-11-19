@@ -1,0 +1,24 @@
+{
+    email {$ACME_EMAIL:admin@example.com}
+}
+
+{$DOMAIN:localhost} {
+    encode gzip zstd
+
+    # Cache static uploads directly
+    handle_path /uploads/* {
+        root * /var/www/uploads
+        file_server
+        header Cache-Control "public, max-age=31536000, immutable"
+    }
+
+    # Proxy to Next.js application container
+    handle {
+        reverse_proxy app:3000 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+}

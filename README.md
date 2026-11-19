@@ -1,36 +1,122 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Masar ERP (مسار)
+
+A production-grade, full-stack ERP system built for small and medium trading and distribution companies.
+
+## Tech Stack
+- **Framework:** Next.js 15 (App Router, Server Actions) + React 19 + TypeScript (strict mode)
+- **Database & ORM:** PostgreSQL 16 + Prisma ORM
+- **Authentication & RBAC:** Auth.js v5 (NextAuth.js beta) with JWT sessions and role-based permissions
+- **Styling & UI:** Tailwind CSS v4 + shadcn/ui + Lucide React + CVA
+- **Data Grids & State:** TanStack Table + TanStack Query
+- **Forms & Validation:** React Hook Form + Zod (shared schemas)
+- **Internationalization (i18n):** next-intl with Arabic (RTL, default) & English (LTR)
+- **Fonts:** Cairo (Arabic) & Inter (English/Latin) via `next/font`
+- **Charts:** Recharts
+- **Testing:** Vitest (unit/integration) + Playwright (e2e)
+- **DevOps:** Docker Compose (PostgreSQL 16 + pgAdmin)
+
+---
 
 ## Getting Started
 
-First, run the development server:
+### 1. Prerequisites
+- Node.js >= 20
+- npm >= 10
+- Docker & Docker Compose
 
+### 2. Environment Configuration
+Copy `.env.example` to `.env`:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env
+```
+Default connection string connects to local PostgreSQL on port 5432.
+
+### 3. Start Database Containers
+```bash
+docker compose up -d
+```
+This spins up:
+- PostgreSQL 16 on `localhost:5432`
+- pgAdmin on `localhost:5050` (user: `admin@masar.local`, pass: `adminpassword`)
+
+### 4. Install Dependencies
+```bash
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 5. Generate Prisma Client & Migrate
+```bash
+npm run db:migrate
+npm run db:seed
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 6. Run the Development Server
+```bash
+npm run dev
+```
+Open [http://localhost:3000](http://localhost:3000) (redirects to default Arabic locale at `/ar`, or visit `/en` for English).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## Project Structure
 
-To learn more about Next.js, take a look at the following resources:
+```text
+src/
+├── app/
+│   ├── [locale]/
+│   │   ├── (auth)/             # Public auth routes (login, forgot-password)
+│   │   ├── (dashboard)/        # Protected ERP routes (inventory, sales, etc.)
+│   │   ├── layout.tsx          # Root localized layout (lang, dir, fonts)
+│   │   └── page.tsx            # Home / landing overview page
+│   ├── api/                    # Route handlers (webhooks, exports only)
+│   └── globals.css             # Tailwind v4 theme variables
+├── components/
+│   ├── ui/                     # shadcn/ui base components
+│   └── shared/                 # Reusable domain components (DataTable, PageHeader, etc.)
+├── features/                   # Feature-sliced ERP modules
+│   ├── auth/
+│   ├── dashboard/
+│   ├── inventory/
+│   ├── sales/
+│   ├── purchasing/
+│   ├── accounting/
+│   ├── hr/
+│   ├── reports/
+│   └── settings/
+├── i18n/                       # next-intl routing and request configuration
+├── lib/
+│   ├── db.ts                   # Prisma client singleton
+│   ├── auth.ts                 # NextAuth v5 configuration
+│   ├── rbac.ts                 # Role-based access control engine
+│   ├── money.ts                # Integer minor units money math & formatting
+│   ├── audit.ts                # Server action audit logger
+│   └── utils.ts                # Class merging utility (clsx + tailwind-merge)
+└── messages/
+    ├── ar.json                 # Arabic translation strings
+    └── en.json                 # English translation strings
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Available Scripts
 
-## Deploy on Vercel
+| Script | Description |
+|---|---|
+| `npm run dev` | Start development server on port 3000 |
+| `npm run build` | Build optimized production bundle |
+| `npm run start` | Run production server |
+| `npm run typecheck` | Run strict TypeScript checks without emit |
+| `npm run lint` | Run ESLint across codebase |
+| `npm run test` | Run unit tests with Vitest |
+| `npm run test:e2e` | Run end-to-end browser tests with Playwright |
+| `npm run db:migrate` | Run Prisma migrations in development |
+| `npm run db:seed` | Seed database using `tsx prisma/seed.ts` |
+| `npm run db:studio` | Open Prisma Studio database viewer |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Documentation
+- Production deployment guide: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
+- Architecture guidelines: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+- Architectural Decision Records: [docs/DECISIONS.md](docs/DECISIONS.md)
+# erp-system

@@ -27,6 +27,17 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Masar ERP - مسار",
   description: "Enterprise Resource Planning for Trading & Distribution",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Masar ERP",
+  },
+};
+
+export const viewport = {
+  themeColor: "#0F766E",
+  width: "device-width",
+  initialScale: 1,
 };
 
 export function generateStaticParams() {

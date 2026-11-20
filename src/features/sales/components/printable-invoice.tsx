@@ -5,6 +5,7 @@ import { Printer, ArrowRight, QrCode } from "lucide-react";
 import { useRouter } from "@/i18n/routing";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
+import { generateZatcaTLV, generateQrDataUrl } from "@/lib/zatca";
 
 export interface PrintableInvoiceProps {
   invoice: {
@@ -65,6 +66,31 @@ export function PrintableInvoice({
   const companyAddress = companySettings?.address || "المملكة العربية السعودية - الرياض";
   const companyPhone = companySettings?.phone || "+966 11 234 5678";
   const currency = companySettings?.currency || "ر.س";
+
+  const [qrCodeUrl, setQrCodeUrl] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    let isMounted = true;
+    try {
+      const zatcaPayload = generateZatcaTLV(
+        companyName,
+        companyTaxNumber,
+        invoice.issueDate,
+        invoice.total,
+        invoice.tax
+      );
+      generateQrDataUrl(zatcaPayload)
+        .then((url) => {
+          if (isMounted) setQrCodeUrl(url);
+        })
+        .catch(() => {});
+    } catch {
+      // Fallback silently if encoding fails
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [companyName, companyTaxNumber, invoice.issueDate, invoice.total, invoice.tax]);
 
   const handlePrint = () => {
     window.print();
@@ -240,8 +266,17 @@ export function PrintableInvoice({
           {/* QR Code & Notes Box */}
           <div className="sm:col-span-7 space-y-4">
             <div className="flex items-center gap-4 rounded border border-slate-200 p-3 bg-slate-50/40">
-              <div className="h-20 w-20 shrink-0 bg-white border border-slate-300 rounded flex items-center justify-center p-1">
-                <QrCode className="h-16 w-16 text-slate-800" />
+              <div className="h-20 w-20 shrink-0 bg-white border border-slate-300 rounded flex items-center justify-center p-0.5 overflow-hidden">
+                {qrCodeUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={qrCodeUrl}
+                    alt="ZATCA E-Invoice QR Code"
+                    className="h-full w-full object-contain"
+                  />
+                ) : (
+                  <QrCode className="h-14 w-14 text-slate-800 animate-pulse" />
+                )}
               </div>
               <div className="text-[11px] text-slate-600 space-y-1">
                 <p className="font-bold text-slate-800">التحقق الضريبي الإلكتروني / E-Invoicing QR</p>

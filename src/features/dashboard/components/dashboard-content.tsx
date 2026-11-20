@@ -16,6 +16,7 @@ import { SalesPurchasesChart } from "./sales-purchases-chart";
 import { TopProductsChart } from "./top-products-chart";
 import { SalesCategoryChart } from "./sales-category-chart";
 import { CashFlowChart } from "./cash-flow-chart";
+import { FinancialHealthWidget } from "./financial-health-widget";
 import { RecentInvoicesWidget } from "./recent-invoices-widget";
 import { OverdueInvoicesWidget } from "./overdue-invoices-widget";
 import { LowStockWidget } from "./low-stock-widget";
@@ -97,6 +98,8 @@ export async function DashboardContent({
         {canSales && <SalesCategoryChart data={salesByCategory} />}
 
         {canAccounting && <CashFlowChart data={cashFlowTrend} />}
+
+        {canAccounting && <FinancialHealthWidget kpis={kpis} locale={locale} />}
       </div>
 
       {/* 3. Operational Tables Section */}

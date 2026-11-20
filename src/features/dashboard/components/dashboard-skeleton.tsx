@@ -62,6 +62,16 @@ export function DashboardSkeleton() {
             <Skeleton className="h-[280px] w-full rounded-md" />
           </CardContent>
         </Card>
+
+        <Card className="col-span-full lg:col-span-2">
+          <CardHeader className="space-y-2">
+            <Skeleton className="h-4 w-44" />
+            <Skeleton className="h-3 w-32" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-[280px] w-full rounded-md" />
+          </CardContent>
+        </Card>
       </div>
 
       {/* Tables Grid Skeleton */}

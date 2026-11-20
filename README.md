@@ -1,10 +1,16 @@
 <div align="center">
 
-# 🏢 Masar ERP (مسار)
-### **Production-Grade Enterprise Resource Planning & Financial Accounting Platform**
+<!-- Animated Header Wave Banner -->
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0F766E,0D9488,14B8A6,06B6D4&height=200&section=header&text=Masar%20ERP%20%E2%80%A2%20%D9%85%D8%B3%D8%A7%D8%B1&fontSize=42&fontAlignY=38&fontColor=ffffff&desc=Enterprise%20Resource%20Planning%20%26%20Financial%20Accounting%20Platform&descAlignY=58&descAlign=50&descSize=16&animation=twinkling" width="100%" alt="Masar ERP Banner" />
 
-A full-stack, transactional ERP system engineered for commercial trading and distribution enterprises. Built with **Next.js 15 App Router**, **React 19**, **TypeScript**, **Prisma ORM**, **PostgreSQL 16**, and **Auth.js v5**.
+<!-- Animated Typing SVG -->
+<p align="center">
+  <a href="https://erp-system-one-alpha.vercel.app">
+    <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=20&duration=2500&pause=1000&color=14B8A6&center=true&vCenter=true&multiline=false&width=620&height=42&lines=%E2%9A%A1+Production+Next.js+15+App+Router+%26+React+19;%F0%9F%8F%A6+Automated+Double-Entry+Financial+Accounting;%F0%9F%94%92+Concurrency-Safe+Stock+Deduction+(SELECT+FOR+UPDATE);%F0%9F%8C%90+Bilingual+Arabic+(RTL)+%26+English+(LTR)+Dashboards" alt="Masar ERP Capabilities" />
+  </a>
+</p>
 
+<!-- Tech Stack Badges -->
 [![Live Application](https://img.shields.io/badge/Live%20Demo-erp--system.vercel.app-0F766E?style=for-the-badge&logo=vercel&logoColor=white)](https://erp-system-one-alpha.vercel.app)
 [![Next.js 15](https://img.shields.io/badge/Next.js-15.0-black?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org/)
 [![React 19](https://img.shields.io/badge/React-19.0-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev/)
@@ -14,7 +20,10 @@ A full-stack, transactional ERP system engineered for commercial trading and dis
 [![Tailwind CSS v4](https://img.shields.io/badge/Tailwind-CSS_v4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 [![Tests Passing](https://img.shields.io/badge/Vitest%20%7C%20Playwright-Passing-2EAD33?style=for-the-badge&logo=vitest&logoColor=white)](#tests)
 
-<br/>
+<!-- Animated Skill Icons -->
+<p align="center">
+  <img src="https://skillicons.dev/icons?i=nextjs,react,ts,tailwind,postgres,prisma,docker,git&theme=dark" alt="Core Technologies" />
+</p>
 
 **[Explore Live Demo](https://erp-system-one-alpha.vercel.app)** • **[Default Credentials](#default-credentials)** • **[Architecture Guide](#system-architecture)** • **[Deployment Guide](#production-deployment)**
 
@@ -296,3 +305,9 @@ npm run test:e2e
 
 Architected and developed by **[Gamal Ahmed](https://github.com/ga5e8je99)**.  
 Licensed under the [MIT License](LICENSE).
+
+---
+
+<!-- Animated Footer Wave -->
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0F766E,0D9488,14B8A6,06B6D4&height=100&section=footer" width="100%" alt="Footer Wave" />
+
